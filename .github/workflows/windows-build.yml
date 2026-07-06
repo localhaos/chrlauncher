@@ -126,5 +126,6 @@ jobs:
           name: ${{ matrix.artifact-name }}
           path: |
             x/bin/${{ matrix.exe-name }}
+            x/bin/Config.ini
             x/bin/Addons/**
           if-no-files-found: error
