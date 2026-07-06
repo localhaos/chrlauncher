@@ -14,15 +14,6 @@ function formatResult(result, isException) {
   return JSON.stringify(result, null, 2);
 }
 
-function runInInspectedPage(fn, args = []) {
-  return new Promise((resolve) => {
-    const source = `(${fn.toString()}).apply(null, ${JSON.stringify(args)})`;
-    chrome.devtools.inspectedWindow.eval(source, { useContentScriptContext: false }, (result, isException) => {
-      resolve(formatResult(result, isException));
-    });
-  });
-}
-
 function ensureState() {
   window.__chrlauncherDevToolsLagGuard = window.__chrlauncherDevToolsLagGuard || {
     installedAt: new Date().toISOString(),
@@ -34,6 +25,15 @@ function ensureState() {
   };
 
   return window.__chrlauncherDevToolsLagGuard;
+}
+
+function runInInspectedPage(fn, args = []) {
+  return new Promise((resolve) => {
+    const source = `(() => {\n${ensureState.toString()}\nreturn (${fn.toString()}).apply(null, ${JSON.stringify(args)});\n})()`;
+    chrome.devtools.inspectedWindow.eval(source, { useContentScriptContext: false }, (result, isException) => {
+      resolve(formatResult(result, isException));
+    });
+  });
 }
 
 function scanDom() {
