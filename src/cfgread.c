@@ -272,7 +272,7 @@ static BOOLEAN cfg_convert_multibyte (
 	return TRUE;
 }
 
-PMINI_INI cfgread_open (
+PCFGREAD cfgread_open (
 	_In_ PR_STRING path
 )
 {
