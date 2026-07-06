@@ -1,0 +1,130 @@
+name: Windows build
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - Win32
+          - x64
+        include:
+          - platform: Win32
+            artifact-name: chrlauncher-x86
+            exe-name: chrlauncher.x86.exe
+          - platform: x64
+            artifact-name: chrlauncher-x64
+            exe-name: chrlauncher.x64.exe
+
+    steps:
+      - name: Checkout chrlauncher
+        uses: actions/checkout@v4
+        with:
+          path: x
+          submodules: false
+
+      - name: Checkout routine dependency
+        uses: actions/checkout@v4
+        with:
+          repository: henrypp/routine
+          path: routine
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Detect usable MSVC toolset
+        id: toolset
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          if (-not (Test-Path -LiteralPath $vswhere)) {
+            throw "vswhere.exe not found: $vswhere"
+          }
+
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            throw 'Visual Studio C++ tools were not found on the runner.'
+          }
+
+          $vcTargetsRoot = Join-Path $installPath 'MSBuild\Microsoft\VC'
+          $toolset = $null
+
+          foreach ($candidate in @('v145', 'v143')) {
+            $match = Get-ChildItem -LiteralPath $vcTargetsRoot -Recurse -Filter Toolset.props -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -like "*PlatformToolsets\$candidate\Toolset.props" } |
+              Select-Object -First 1
+
+            if ($match) {
+              $toolset = $candidate
+              break
+            }
+          }
+
+          if (-not $toolset) {
+            throw "Neither v145 nor v143 C++ platform toolset is installed under $vcTargetsRoot"
+          }
+
+          "MSVC_TOOLSET=$toolset" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "toolset=$toolset" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "Selected MSVC platform toolset: $toolset"
+
+      - name: Validate project files
+        shell: pwsh
+        working-directory: x
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($path in @('chrlauncher.sln', 'chrlauncher.vcxproj', 'src/app_config.c', 'src/app_paths.c')) {
+            if (-not (Test-Path -LiteralPath $path)) {
+              Get-ChildItem -Force | Format-Table Mode, Length, Name
+              throw "$path missing from checkout path x"
+            }
+          }
+
+      - name: Build
+        shell: pwsh
+        working-directory: x
+        run: |
+          $ErrorActionPreference = 'Stop'
+          msbuild chrlauncher.sln `
+            /m `
+            /p:Configuration=Release `
+            /p:Platform=${{ matrix.platform }} `
+            /p:PreferredToolArchitecture=x64 `
+            /p:PlatformToolset=$env:MSVC_TOOLSET `
+            /verbosity:minimal
+
+      - name: Verify output
+        shell: pwsh
+        working-directory: x
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = Join-Path (Join-Path $PWD 'bin') '${{ matrix.exe-name }}'
+          if (-not (Test-Path -LiteralPath $exe)) {
+            Get-ChildItem -Path (Join-Path $PWD 'bin') -Recurse -ErrorAction SilentlyContinue | Format-Table FullName, Length
+            throw '${{ matrix.exe-name }} was not produced in bin root.'
+          }
+          Get-Item -LiteralPath $exe | Format-List FullName, Length, LastWriteTimeUtc
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: |
+            x/bin/${{ matrix.exe-name }}
+            x/bin/Addons/**
+          if-no-files-found: error
