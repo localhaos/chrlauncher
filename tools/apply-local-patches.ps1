@@ -1,49 +1,84 @@
 [CmdletBinding()]
 param(
-    [string]$PatchDirectory = (Join-Path $PSScriptRoot '..\patches')
+    [string]$PatchDirectory = (Join-Path $PSScriptRoot '..\patches'),
+    [string]$RoutineDirectory = (Join-Path $PSScriptRoot '..\..\routine')
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
 $repoRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')
-Set-Location -LiteralPath $repoRoot
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     throw 'git.exe was not found in PATH; cannot apply repository patches.'
 }
 
-if (-not (Test-Path -LiteralPath $PatchDirectory)) {
-    Write-Host "[PATCH] Directory not found, nothing to apply: $PatchDirectory"
-    exit 0
-}
+function Invoke-GitPatchSet {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TargetDirectory,
 
-$patches = Get-ChildItem -LiteralPath $PatchDirectory -Filter '*.patch' -File | Sort-Object Name
+        [Parameter(Mandatory = $true)]
+        [string]$PatchRoot,
 
-if (-not $patches) {
-    Write-Host "[PATCH] No *.patch files in: $PatchDirectory"
-    exit 0
-}
+        [Parameter(Mandatory = $true)]
+        [string]$Label
+    )
 
-foreach ($patch in $patches) {
-    $patchPath = $patch.FullName
-    Write-Host "[PATCH] Checking $($patch.Name)"
-
-    & git apply --reverse --check --ignore-whitespace --whitespace=nowarn $patchPath 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "[PATCH] Already applied: $($patch.Name)"
-        continue
+    if (-not (Test-Path -LiteralPath $TargetDirectory)) {
+        Write-Host "[PATCH] $Label target not found, skipping: $TargetDirectory"
+        return
     }
 
-    & git apply --check --ignore-whitespace --whitespace=nowarn $patchPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "Patch check failed: $patchPath"
+    if (-not (Test-Path -LiteralPath $PatchRoot)) {
+        Write-Host "[PATCH] $Label patch directory not found, skipping: $PatchRoot"
+        return
     }
 
-    & git apply --ignore-whitespace --whitespace=nowarn $patchPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "Patch apply failed: $patchPath"
+    $patches = Get-ChildItem -LiteralPath $PatchRoot -Filter '*.patch' -File | Sort-Object Name
+
+    if (-not $patches) {
+        Write-Host "[PATCH] No $Label *.patch files in: $PatchRoot"
+        return
     }
 
-    Write-Host "[PATCH] Applied: $($patch.Name)"
+    Push-Location -LiteralPath $TargetDirectory
+
+    try {
+        foreach ($patch in $patches) {
+            $patchPath = $patch.FullName
+            Write-Host "[PATCH][$Label] Checking $($patch.Name)"
+
+            & git apply --reverse --check --ignore-whitespace --whitespace=nowarn $patchPath 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "[PATCH][$Label] Already applied: $($patch.Name)"
+                continue
+            }
+
+            & git apply --check --ignore-whitespace --whitespace=nowarn $patchPath
+            if ($LASTEXITCODE -ne 0) {
+                throw "Patch check failed: $patchPath"
+            }
+
+            & git apply --ignore-whitespace --whitespace=nowarn $patchPath
+            if ($LASTEXITCODE -ne 0) {
+                throw "Patch apply failed: $patchPath"
+            }
+
+            Write-Host "[PATCH][$Label] Applied: $($patch.Name)"
+        }
+    }
+    finally {
+        Pop-Location
+    }
 }
+
+Invoke-GitPatchSet `
+    -TargetDirectory $repoRoot `
+    -PatchRoot $PatchDirectory `
+    -Label 'chrlauncher'
+
+Invoke-GitPatchSet `
+    -TargetDirectory $RoutineDirectory `
+    -PatchRoot (Join-Path $PatchDirectory 'routine') `
+    -Label 'routine'
