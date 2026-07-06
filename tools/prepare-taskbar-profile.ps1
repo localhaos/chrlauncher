@@ -13,7 +13,9 @@ if (-not (Test-Path -LiteralPath $path)) {
 
 $text = Get-Content -LiteralPath $path -Raw
 
-if ($text -match 'ChromiumUseLastProfileOnTaskbarLaunch') {
+$patchedMarker = 'pbi->is_hasurls || _app_config_getboolean (L"ChromiumUseLastProfileOnTaskbarLaunch", TRUE)'
+
+if ($text.Contains($patchedMarker)) {
     Write-Host '[PREP] Taskbar profile patch already present.'
     exit 0
 }
@@ -30,7 +32,7 @@ $text = [regex]::Replace(
     [System.Text.RegularExpressions.RegexOptions]::Singleline
 )
 
-if ($text -notmatch 'ChromiumUseLastProfileOnTaskbarLaunch') {
+if (-not $text.Contains($patchedMarker)) {
     throw 'Taskbar profile patch did not apply.'
 }
 
