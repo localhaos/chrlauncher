@@ -14,11 +14,30 @@ Protection layers:
 2. `Config.ini` uses `--disable-sync-types=Extensions,Apps,ExtensionSettings`, keeping account sync usable while preventing extension/app sync from overriding local addons.
 3. `chrome++.ini` is self-healed by native bootstraps and `optimizer_guard`.
 4. This addon provides a manual repair script for already-damaged local state.
+5. Optional user-policy script can disable only extension/app sync when the Chromium build ignores the command-line sync-type switch.
 
 Manual repair:
 
 ```bat
 Addons\extension_guard\repair-extensions-after-sync.bat
+```
+
+Optional policy-level guard:
+
+```bat
+Addons\extension_guard\apply-user-extension-sync-policy.bat
+```
+
+Dry run:
+
+```bat
+Addons\extension_guard\apply-user-extension-sync-policy.bat -WhatIfOnly
+```
+
+Chromium policy only:
+
+```bat
+Addons\extension_guard\apply-user-extension-sync-policy.bat -ChromiumOnly
 ```
 
 After repair:
@@ -29,4 +48,4 @@ After repair:
    - `chrlauncher Tab Tools`
    - `chrlauncher CF Manual Helper`
 
-This does not bypass Chrome Web Store, does not install remote extensions, and does not modify Google account data.
+This does not bypass Chrome Web Store, does not install remote extensions, and does not modify Google account data. The optional policy script writes HKCU browser policy values only when the user runs it explicitly.
