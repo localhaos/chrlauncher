@@ -1,4 +1,5 @@
 #include "cfgread.h"
+#include "xallocator/xallocator.h"
 
 #include <wchar.h>
 
@@ -14,15 +15,14 @@ static PVOID cfg_alloc (
 	_In_ SIZE_T size
 )
 {
-	return HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, size);
+	return xmalloc (size);
 }
 
 static VOID cfg_free (
 	_In_opt_ PVOID ptr
 )
 {
-	if (ptr)
-		HeapFree (GetProcessHeap (), 0, ptr);
+	xfree (ptr);
 }
 
 static PWSTR cfg_next (
