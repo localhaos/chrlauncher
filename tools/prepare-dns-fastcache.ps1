@@ -129,12 +129,14 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 	PR_STRING args_cache_key = NULL;
 	PR_STRING args_cache_path = NULL;
 	PR_STRING blocklist_text = NULL;
-	PR_STRING blocklist_url;
+	PR_STRING blocklist_url = NULL;
 	PR_STRING cached_arguments = NULL;
+	PR_STRING host_arguments = NULL;
 	PR_STRING next_rules;
+	PR_STRING return_arguments = NULL;
 	PR_STRING rules = NULL;
-	PR_STRING secure_dns_arguments;
-	PR_STRING sink;
+	PR_STRING secure_dns_arguments = NULL;
+	PR_STRING sink = NULL;
 	LPCWSTR ptr;
 	LONG max_age_hours;
 	LONG max_chars;
@@ -148,20 +150,25 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 
 	secure_dns_arguments = _app_create_secure_dns_arguments_from_config ();
 
-	if (secure_dns_arguments)
-		return secure_dns_arguments;
-
 	if (!_app_config_getboolean (L"ChromiumEnableDnsBlocklistUrl", FALSE))
-		return NULL;
+	{
+		if (secure_dns_arguments)
+			return_arguments = (PR_STRING)_r_obj_reference (secure_dns_arguments);
+
+		goto CleanupExit;
+	}
 
 	blocklist_url = _app_config_getstringexpand (L"ChromiumDnsBlocklistUrl", L"");
 
 	if (_app_is_rethinkdns_template (blocklist_url))
 	{
-		secure_dns_arguments = _app_create_secure_dns_arguments (blocklist_url);
-		_r_obj_dereference (blocklist_url);
+		if (!secure_dns_arguments)
+			secure_dns_arguments = _app_create_secure_dns_arguments (blocklist_url);
 
-		return secure_dns_arguments;
+		if (secure_dns_arguments)
+			return_arguments = (PR_STRING)_r_obj_reference (secure_dns_arguments);
+
+		goto CleanupExit;
 	}
 
 	sink = _app_config_getstring (L"ChromiumDnsBlocklistSink", CHROMIUM_DNS_BLOCKLIST_SINK);
@@ -184,7 +191,12 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 		_r_obj_movereference ((PVOID_PTR)&sink, _r_obj_createstring (CHROMIUM_DNS_BLOCKLIST_SINK));
 
 	if (_r_obj_isstringempty (blocklist_url) || _r_obj_isstringempty (sink))
+	{
+		if (secure_dns_arguments)
+			return_arguments = (PR_STRING)_r_obj_reference (secure_dns_arguments);
+
 		goto CleanupExit;
+	}
 
 	if (use_cache)
 	{
@@ -196,7 +208,14 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 			cached_arguments = _app_read_text_cache_file (args_cache_path, max_age_hours, FALSE);
 
 			if (!_r_obj_isstringempty (cached_arguments))
+			{
+				if (secure_dns_arguments)
+					return_arguments = _r_obj_concatstrings (3, secure_dns_arguments->buffer, L" ", cached_arguments->buffer);
+				else
+					return_arguments = (PR_STRING)_r_obj_reference (cached_arguments);
+
 				goto CleanupExit;
+			}
 
 			if (cached_arguments)
 				_r_obj_clearreference (&cached_arguments);
@@ -206,7 +225,12 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 	blocklist_text = _app_get_dnsblock_text (blocklist_url);
 
 	if (_r_obj_isstringempty (blocklist_text))
+	{
+		if (secure_dns_arguments)
+			return_arguments = (PR_STRING)_r_obj_reference (secure_dns_arguments);
+
 		goto CleanupExit;
+	}
 
 	rules = _r_obj_createstring (L"");
 
@@ -242,14 +266,24 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 	}
 
 	if (!count || _r_obj_isstringempty (rules))
+	{
+		if (secure_dns_arguments)
+			return_arguments = (PR_STRING)_r_obj_reference (secure_dns_arguments);
+
 		goto CleanupExit;
+	}
 
-	next_rules = _r_format_string (L"--host-resolver-rules=\"%s\"", rules->buffer);
+	host_arguments = _r_format_string (L"--host-resolver-rules=\"%s\"", rules->buffer);
 
-	if (next_rules && args_cache_path)
-		_app_write_text_cache_file (args_cache_path, next_rules);
+	if (host_arguments && args_cache_path)
+		_app_write_text_cache_file (args_cache_path, host_arguments);
 
-	_r_obj_movereference (&cached_arguments, next_rules);
+	if (host_arguments && secure_dns_arguments)
+		return_arguments = _r_obj_concatstrings (3, secure_dns_arguments->buffer, L" ", host_arguments->buffer);
+	else if (host_arguments)
+		return_arguments = (PR_STRING)_r_obj_reference (host_arguments);
+	else if (secure_dns_arguments)
+		return_arguments = (PR_STRING)_r_obj_reference (secure_dns_arguments);
 
 CleanupExit:
 
@@ -265,13 +299,22 @@ CleanupExit:
 	if (blocklist_url)
 		_r_obj_dereference (blocklist_url);
 
+	if (cached_arguments)
+		_r_obj_dereference (cached_arguments);
+
+	if (host_arguments)
+		_r_obj_dereference (host_arguments);
+
 	if (rules)
 		_r_obj_dereference (rules);
+
+	if (secure_dns_arguments)
+		_r_obj_dereference (secure_dns_arguments);
 
 	if (sink)
 		_r_obj_dereference (sink);
 
-	return cached_arguments;
+	return return_arguments;
 }
 '@
 
@@ -283,4 +326,4 @@ $text = [regex]::Replace(
 )
 
 Set-Content -LiteralPath $path -Value $text -NoNewline -Encoding UTF8
-Write-Host '[PREP] DNS local-file + generated-rules cache patch applied.'
+Write-Host '[PREP] DNS local-file + generated-rules cache + SecureDNS merge patch applied.'
