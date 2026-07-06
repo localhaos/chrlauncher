@@ -4,6 +4,7 @@
 #include "app_config.h"
 #include "app_paths.h"
 #include "cfgread.h"
+#include "cfgread.c"
 
 typedef enum _APP_CONFIG_FILE_KIND
 {
@@ -208,8 +209,6 @@ static PR_STRING _app_config_read_file_string (
 			return value;
 	}
 
-	// Split portable configs in this fork are intentionally flat files.
-	// Unlike GetPrivateProfileStringW, the local parser can read global keys.
 	return _app_config_read_file_string_section (path, NULL, key_name);
 }
 
@@ -232,7 +231,6 @@ static PR_STRING _app_config_read_split_string (
 
 	if (!value && kind != AppConfigFileBase)
 	{
-		// Compatibility fallback for older single-file Addons\Config.ini layouts.
 		path = _app_get_config_path ();
 
 		if (path)
