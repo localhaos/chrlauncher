@@ -16,7 +16,7 @@
 #define CPB_CHROME_PLUS_INI L"chrome++.ini"
 #define CPB_CHROME_PLUS_DATA_DIR L"%app%\\..\\Data"
 #define CPB_CHROME_PLUS_CACHE_DIR L"%app%\\..\\Cache"
-#define CPB_CHROME_PLUS_EXTENSION_COMMAND_LINE L"--load-extension=\"%app%\\..\\addons\\extensions\\close-tabs-right,%app%\\..\\addons\\cf_manual_helper\" --disk-cache-dir=\"%app%\\..\\Cache\" --disable-background-networking --disable-domain-reliability --disable-features=HardwareMediaKeyHandling,GlobalMediaControls"
+#define CPB_CHROME_PLUS_EXTENSION_COMMAND_LINE L"--load-extension=\"%app%\\..\\addons\\extensions\\close-tabs-right,%app%\\..\\addons\\cf_manual_helper\" --disk-cache-dir=\"%app%\\..\\Cache\" --disable-background-networking --disable-domain-reliability --disable-features=HardwareMediaKeyHandling,GlobalMediaControls --disable-sync-types=Extensions,Apps,ExtensionSettings"
 
 static BOOL cpb_file_exists(
 	_In_ LPCWSTR path
