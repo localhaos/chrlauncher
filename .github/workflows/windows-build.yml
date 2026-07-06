@@ -11,10 +11,18 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build ${{ matrix.platform }}
     runs-on: windows-latest
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
@@ -36,12 +44,14 @@ jobs:
         with:
           path: x
           submodules: false
+          fetch-depth: 1
 
       - name: Checkout routine dependency
         uses: actions/checkout@v4
         with:
           repository: henrypp/routine
           path: routine
+          fetch-depth: 1
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
@@ -114,25 +124,97 @@ jobs:
         working-directory: x
         run: |
           $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path (Join-Path $PWD 'bin') | Out-Null
+          $log = Join-Path $PWD 'bin\msbuild-${{ matrix.platform }}.log'
           msbuild chrlauncher.sln `
             /m `
             /p:Configuration=Release `
             /p:Platform=${{ matrix.platform }} `
             /p:PreferredToolArchitecture=x64 `
             /p:PlatformToolset=$env:MSVC_TOOLSET `
-            /verbosity:minimal
+            /verbosity:minimal `
+            /fileLogger `
+            /fileLoggerParameters:"LogFile=$log;Verbosity=normal;Encoding=UTF-8"
 
       - name: Verify output
         shell: pwsh
         working-directory: x
         run: |
           $ErrorActionPreference = 'Stop'
-          $exe = Join-Path (Join-Path $PWD 'bin') '${{ matrix.exe-name }}'
+          $bin = Join-Path $PWD 'bin'
+          $exe = Join-Path $bin '${{ matrix.exe-name }}'
           if (-not (Test-Path -LiteralPath $exe)) {
-            Get-ChildItem -Path (Join-Path $PWD 'bin') -Recurse -ErrorAction SilentlyContinue | Format-Table FullName, Length
+            Get-ChildItem -Path $bin -Recurse -ErrorAction SilentlyContinue | Format-Table FullName, Length
             throw '${{ matrix.exe-name }} was not produced in bin root.'
           }
+
+          foreach ($path in @(
+            'Config.ini',
+            'Addons\extensions\close-tabs-right\manifest.json',
+            'Addons\cf_manual_helper\manifest.json',
+            'Addons\optimizer_guard\optimizer_guard.ini',
+            'Addons\slurg\index.html',
+            'Addons\src\README.md'
+          )) {
+            $full = Join-Path $bin $path
+            if (-not (Test-Path -LiteralPath $full)) {
+              throw "Artifact layout missing $path"
+            }
+          }
+
+          foreach ($obsolete in @(
+            'Addons\Config.ini',
+            'Addons\Parameters.ini',
+            'Addons\Version.ini',
+            'Addons\extensions\close-tabs-right\cf_manual_helper.js',
+            'Addons\extensions\close-tabs-right\slurg.html'
+          )) {
+            $full = Join-Path $bin $obsolete
+            if (Test-Path -LiteralPath $full) {
+              throw "Obsolete artifact file still present: $obsolete"
+            }
+          }
+
           Get-Item -LiteralPath $exe | Format-List FullName, Length, LastWriteTimeUtc
+
+      - name: Generate artifact manifest
+        shell: pwsh
+        working-directory: x
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bin = Join-Path $PWD 'bin'
+          $manifest = Join-Path $bin 'artifact-manifest-${{ matrix.platform }}.txt'
+          $hashes = Join-Path $bin 'artifact-sha256-${{ matrix.platform }}.txt'
+          $files = Get-ChildItem -LiteralPath $bin -Recurse -File |
+            Where-Object { $_.Name -notlike 'msbuild-*.log' } |
+            Sort-Object FullName
+
+          "platform=${{ matrix.platform }}" | Set-Content -LiteralPath $manifest -Encoding UTF8
+          "exe=${{ matrix.exe-name }}" | Add-Content -LiteralPath $manifest -Encoding UTF8
+          "head_sha=${{ github.sha }}" | Add-Content -LiteralPath $manifest -Encoding UTF8
+          "generated_utc=$((Get-Date).ToUniversalTime().ToString('o'))" | Add-Content -LiteralPath $manifest -Encoding UTF8
+          "" | Add-Content -LiteralPath $manifest -Encoding UTF8
+          "relative_path`tbytes`tsha256" | Add-Content -LiteralPath $manifest -Encoding UTF8
+
+          foreach ($file in $files) {
+            $relative = [IO.Path]::GetRelativePath($bin, $file.FullName).Replace('/', '\')
+            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $file.FullName).Hash.ToLowerInvariant()
+            "$relative`t$($file.Length)`t$hash" | Add-Content -LiteralPath $manifest -Encoding UTF8
+            "$hash  $relative" | Add-Content -LiteralPath $hashes -Encoding UTF8
+          }
+
+          Get-Content -LiteralPath $manifest -TotalCount 40
+
+      - name: Upload build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrlauncher-${{ matrix.platform }}-diagnostics
+          path: |
+            x/bin/msbuild-${{ matrix.platform }}.log
+            x/bin/**/*.log
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -141,5 +223,8 @@ jobs:
           path: |
             x/bin/${{ matrix.exe-name }}
             x/bin/Config.ini
+            x/bin/artifact-manifest-${{ matrix.platform }}.txt
+            x/bin/artifact-sha256-${{ matrix.platform }}.txt
             x/bin/Addons/**
           if-no-files-found: error
+          retention-days: 90
