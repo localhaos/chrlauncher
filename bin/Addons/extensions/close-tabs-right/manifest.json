@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "chrlauncher Tab Tools",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Adds tab actions, local site-test helpers, ChatGPT download repair, and DevTools Lag Guard.",
   "permissions": [
     "contextMenus",
