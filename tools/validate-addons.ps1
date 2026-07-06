@@ -54,6 +54,11 @@ function Read-IniValue([string]$Path, [string]$Section, [string]$Key) {
 
 Assert-Dir $Addons
 
+$configCommand = Read-IniValue (Join-Path $Root 'bin\Config.ini') 'chrlauncher' 'ChromiumCommandLine'
+if ($configCommand -notlike '*--disable-features=HardwareMediaKeyHandling,GlobalMediaControls*') {
+    Add-Err 'Config.ini missing media/DevTools crash guard disable-features.'
+}
+
 $tabTools = Join-Path $Addons 'extensions\close-tabs-right'
 Assert-Dir $tabTools
 $tabManifest = Read-Json (Join-Path $tabTools 'manifest.json')
@@ -77,20 +82,28 @@ if ($tabManifest) {
     }
     $manifestText = Get-Content -LiteralPath (Join-Path $tabTools 'manifest.json') -Raw -Encoding UTF8
     if ($manifestText -match 'http://\*/\*|https://\*/\*') { Add-Err 'Tab Tools should not request broad all-host permissions.' }
+    $devtoolsText = Get-Content -LiteralPath (Join-Path $tabTools 'devtools.js') -Raw -Encoding UTF8
+    if ($devtoolsText -notlike '*facebook.com*') { Add-Err 'DevTools Lag Guard must stay disabled on Facebook sessions.' }
 }
 
 $cf = Join-Path $Addons 'cf_manual_helper'
 Assert-Dir $cf
-$cfManifest = Read-Json (Join-Path $cf 'manifest.json')
+$cfManifestPath = Join-Path $cf 'manifest.json'
+$cfManifest = Read-Json $cfManifestPath
 if ($cfManifest) {
     if ($cfManifest.name -ne 'chrlauncher CF Manual Helper') { Add-Err 'CF helper manifest name mismatch.' }
     foreach ($file in @('content.js', 'popup.html', 'popup.css', 'popup.js', 'README.md')) {
         Assert-File (Join-Path $cf $file)
     }
+    $cfManifestText = Get-Content -LiteralPath $cfManifestPath -Raw -Encoding UTF8
+    foreach ($requiredExclude in @('https://*.facebook.com/*', 'https://*.youtube.com/*', 'https://open.spotify.com/*')) {
+        if ($cfManifestText -notlike "*$requiredExclude*") { Add-Err "CF helper missing heavy-site exclude: $requiredExclude" }
+    }
     $cfText = Get-Content -LiteralPath (Join-Path $cf 'content.js') -Raw -Encoding UTF8
     foreach ($forbidden in @('document.cookie =', 'chrome.cookies.set', 'turnstile.click', '.click()')) {
         if ($cfText.Contains($forbidden)) { Add-Err "CF helper contains forbidden token/action: $forbidden" }
     }
+    if ($cfText -notlike '*MAX_OBSERVER_LIFETIME_MS*') { Add-Err 'CF helper observer must remain time-bounded.' }
 }
 
 $slurg = Join-Path $Addons 'slurg'
@@ -113,7 +126,7 @@ $guardIni = Join-Path $optimizer 'optimizer_guard.ini'
 $guardCommand = Read-IniValue $guardIni 'chrome_plus' 'command_line'
 if (-not $guardCommand) { Add-Err 'optimizer_guard.ini missing [chrome_plus] command_line.' }
 else {
-    foreach ($required in @('addons\extensions\close-tabs-right', 'addons\cf_manual_helper', '--disk-cache-dir', '--disable-background-networking', '--disable-domain-reliability')) {
+    foreach ($required in @('addons\extensions\close-tabs-right', 'addons\cf_manual_helper', '--disk-cache-dir', '--disable-background-networking', '--disable-domain-reliability', '--disable-features=HardwareMediaKeyHandling,GlobalMediaControls')) {
         if ($guardCommand -notlike "*$required*") { Add-Err "optimizer_guard command_line missing: $required" }
     }
 }
