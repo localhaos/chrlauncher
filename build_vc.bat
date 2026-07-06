@@ -8,6 +8,12 @@ echo chrlauncher local MSBuild helper
 echo ============================================================
 echo Root: "%CD%"
 
+if exist "%CD%\tools\apply-local-patches.ps1" (
+    echo [PATCH] Applying local repository patches...
+    powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%CD%\tools\apply-local-patches.ps1"
+    if errorlevel 1 goto :fail
+)
+
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VCVARS="
 
