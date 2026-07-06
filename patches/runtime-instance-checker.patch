@@ -1,0 +1,112 @@
+diff --git a/src/main.c b/src/main.c
+index 698c87d..7bdf0b1 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -38,6 +38,89 @@ PR_STRING _app_get_profile_argument (
+ 	_In_ PBROWSER_INFORMATION pbi
+ );
+ 
++BOOLEAN _app_is_singleton_path_locked (
++	_In_ PR_STRINGREF path
++)
++{
++	HANDLE hfile;
++	DWORD error_code;
++
++	if (!path || !path->buffer || !path->length)
++		return FALSE;
++
++	hfile = CreateFileW (
++		path->buffer,
++		GENERIC_READ,
++		0,
++		NULL,
++		OPEN_EXISTING,
++		FILE_ATTRIBUTE_NORMAL,
++		NULL
++	);
++
++	if (hfile == INVALID_HANDLE_VALUE)
++	{
++		error_code = GetLastError ();
++
++		return error_code == ERROR_SHARING_VIOLATION || error_code == ERROR_LOCK_VIOLATION || error_code == ERROR_ACCESS_DENIED;
++	}
++
++	NtClose (hfile);
++
++	return FALSE;
++}
++
++BOOLEAN _app_is_same_browser_instance_running (
++	_In_ PBROWSER_INFORMATION pbi
++)
++{
++	static LPCWSTR const singleton_names[] = {
++		L"SingletonLock",
++		L"SingletonCookie",
++		L"SingletonSocket",
++	};
++
++	PR_STRING singleton_path;
++
++	if (!pbi)
++		return FALSE;
++
++	if (!_app_config_getboolean (L"ChromiumSameInstanceCheck", TRUE))
++	{
++		if (!_r_obj_isstringempty (pbi->binary_path))
++			return _r_fs_isfileused (&pbi->binary_path->sr);
++
++		return FALSE;
++	}
++
++	if (_r_obj_isstringempty (pbi->user_data_dir))
++	{
++		if (!_r_obj_isstringempty (pbi->binary_path))
++			return _r_fs_isfileused (&pbi->binary_path->sr);
++
++		return FALSE;
++	}
++
++	for (ULONG_PTR i = 0; i < RTL_NUMBER_OF (singleton_names); i++)
++	{
++		singleton_path = _r_format_string (L"%s\\%s", pbi->user_data_dir->buffer, singleton_names[i]);
++
++		if (!singleton_path)
++			continue;
++
++		if (_r_fs_exists (&singleton_path->sr) && _app_is_singleton_path_locked (&singleton_path->sr))
++		{
++			_r_obj_dereference (singleton_path);
++
++			return TRUE;
++		}
++
++		_r_obj_dereference (singleton_path);
++	}
++
++	return FALSE;
++}
++
+ BOOL CALLBACK activate_browser_window_callback (
+ 	_In_ HWND hwnd,
+ 	_In_ LPARAM lparam
+@@ -69,7 +152,7 @@ BOOL CALLBACK activate_browser_window_callback (
+ 	{
+ 		pbi = (PBROWSER_INFORMATION)lparam;
+ 
+-		if (_r_str_isequal (&pbi->binary_path->sr, &process_path->sr, TRUE))
++		if (_r_str_isequal (&pbi->binary_path->sr, &process_path->sr, TRUE) && _app_is_same_browser_instance_running (pbi))
+ 		{
+ 			_r_wnd_toggle (hwnd, TRUE);
+ 
+@@ -1599,7 +1682,7 @@ BOOLEAN _app_openbrowser (
+ 		return FALSE;
+ 	}
+ 
+-	if (_r_fs_isfileused (&pbi->binary_path->sr) && !pbi->is_hasurls && !pbi->is_opennewwindow)
++	if (_app_is_same_browser_instance_running (pbi) && !pbi->is_hasurls && !pbi->is_opennewwindow)
+ 	{
+ 		EnumWindows (&activate_browser_window_callback, (LPARAM)pbi);
+ 
