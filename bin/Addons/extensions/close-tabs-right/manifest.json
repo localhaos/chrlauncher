@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "chrlauncher Close Tabs Right",
-  "version": "1.0.0",
-  "description": "Adds a local action to close tabs to the right of the selected tab.",
+  "name": "chrlauncher Tab Tools",
+  "version": "1.1.0",
+  "description": "Adds local tab context menu actions for closing tabs to the left or right of the selected tab.",
   "permissions": [
     "contextMenus",
     "tabs"
@@ -11,6 +11,6 @@
     "service_worker": "service_worker.js"
   },
   "action": {
-    "default_title": "Close tabs to the right"
+    "default_title": "Tab tools"
   }
 }
