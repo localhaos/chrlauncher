@@ -67,6 +67,7 @@ jobs:
           }
           $cfg = Get-Content -LiteralPath 'bin\Addons\config.ini' -Raw
           foreach ($needle in @(
+            'ChromiumDirectory=.\Chromium',
             'ChromiumEnableLosslessOptimization=false',
             'ChromiumEnableTextPerformanceFixes=false',
             'ChromiumIgnoreGpuBlocklist=false',
