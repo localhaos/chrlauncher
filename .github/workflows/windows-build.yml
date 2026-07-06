@@ -14,7 +14,7 @@ on:
 
 jobs:
   build:
-    name: Build x64 portable
+    name: Build x64 portable lowmem
     runs-on: windows-latest
 
     steps:
@@ -32,6 +32,11 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
+
+      - name: Apply low-memory config
+        shell: pwsh
+        working-directory: x
+        run: .\tools\prepare-lowmem-config.ps1
 
       - name: Build x64
         working-directory: x
@@ -60,11 +65,22 @@ jobs:
               throw "Missing portable artifact file: $path"
             }
           }
+          $cfg = Get-Content -LiteralPath 'bin\Addons\config.ini' -Raw
+          foreach ($needle in @(
+            'ChromiumEnableLosslessOptimization=false',
+            'ChromiumEnableTextPerformanceFixes=false',
+            'ChromiumIgnoreGpuBlocklist=false',
+            'ChromiumEnableScrollableTabs=false',
+            'ChromiumEnableCloseTabsRightExtension=false',
+            'ChromiumEnableAutofillPasswordFixes=false'
+          )) {
+            if ($cfg -notlike "*$needle*") { throw "Low-memory config marker missing: $needle" }
+          }
           Get-Item -LiteralPath 'bin\chrlauncher.x64.exe' | Format-List FullName, Length, LastWriteTimeUtc
 
       - name: Upload portable artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: chrlauncher-restore-x64-portable
+          name: chrlauncher-restore-x64-lowmem
           path: x/bin/**
           if-no-files-found: error
