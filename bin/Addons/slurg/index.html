@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Slurg Diagnostics</title>
+  <link rel="stylesheet" href="slurg.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">chrlauncher Addon</p>
+      <h1>Slurg Diagnostics</h1>
+      <p class="lead">Samodzielny Addon diagnostyczny z indeksem bezpiecznych stron <code>chrome://</code>. To nie jest rozszerzenie i nie rejestruje prawdziwego nowego <code>chrome://slurg</code>.</p>
+    </div>
+    <div class="summary" id="summary"></div>
+  </header>
+
+  <section class="toolbar">
+    <input id="search" type="search" placeholder="Filtruj: gpu, profile, network, internal..." autofocus>
+    <select id="statusFilter" aria-label="Status">
+      <option value="all">wszystkie</option>
+      <option value="documented">documented</option>
+      <option value="internal">internal / undocumented</option>
+      <option value="conditional">conditional / ChromeOS</option>
+    </select>
+    <button id="copyAll" type="button">Kopiuj widoczne URL</button>
+  </section>
+
+  <main>
+    <section id="cards" class="cards"></section>
+
+    <section class="omitted">
+      <h2>Pominięte celowo</h2>
+      <p>Załączona lista zawierała też bookmarklety i linki typu exploit/bypass/proxy/password/cookie extractor. Te wpisy nie są dodane do Slurg.</p>
+      <ul id="omittedList"></ul>
+    </section>
+  </main>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <div class="cardTop">
+        <span class="badge"></span>
+        <span class="category"></span>
+      </div>
+      <h2 class="title"></h2>
+      <code class="url"></code>
+      <p class="note"></p>
+      <div class="actions">
+        <a class="open" target="_blank" rel="noreferrer">Otwórz</a>
+        <button class="copy" type="button">Kopiuj</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="slurg_data.js"></script>
+  <script src="slurg.js"></script>
+</body>
+</html>

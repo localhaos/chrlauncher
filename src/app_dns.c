@@ -102,6 +102,17 @@ static BOOLEAN _app_is_valid_secure_dns_template (
 	return TRUE;
 }
 
+static BOOLEAN _app_is_rethinkdns_template (
+	_In_opt_ PR_STRING dns_template
+)
+{
+	if (!_app_is_valid_secure_dns_template (dns_template))
+		return FALSE;
+
+	return _wcsnicmp (dns_template->buffer, L"https://sky.rethinkdns.com/", 26) == 0 ||
+		_wcsnicmp (dns_template->buffer, L"https://max.rethinkdns.com/", 26) == 0;
+}
+
 static PR_STRING _app_create_secure_dns_arguments (
 	_In_ PR_STRING dns_template
 )
@@ -512,6 +523,15 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 		return NULL;
 
 	blocklist_url = _app_config_getstringexpand (L"ChromiumDnsBlocklistUrl", L"");
+
+	if (_app_is_rethinkdns_template (blocklist_url))
+	{
+		secure_dns_arguments = _app_create_secure_dns_arguments (blocklist_url);
+		_r_obj_dereference (blocklist_url);
+
+		return secure_dns_arguments;
+	}
+
 	blocklist_text = _app_get_dnsblock_text (blocklist_url);
 
 	if (blocklist_url)

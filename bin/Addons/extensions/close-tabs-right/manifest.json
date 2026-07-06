@@ -1,16 +1,57 @@
 {
   "manifest_version": 3,
-  "name": "chrlauncher Close Tabs Right",
-  "version": "1.0.0",
-  "description": "Adds a local action to close tabs to the right of the selected tab.",
+  "name": "chrlauncher Tab Tools",
+  "version": "1.6.2",
+  "description": "Adds tab actions, local site-test helpers, ChatGPT download repair, and DevTools Lag Guard.",
   "permissions": [
     "contextMenus",
+    "downloads",
+    "storage",
     "tabs"
+  ],
+  "host_permissions": [
+    "https://adblock.turtlecute.org/*",
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://*.oaiusercontent.com/*"
   ],
   "background": {
     "service_worker": "service_worker.js"
   },
+  "devtools_page": "devtools.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://adblock.turtlecute.org/*"
+      ],
+      "js": [
+        "site_test_content.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "chatgpt_download_content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "chatgpt_download_page_hook.js"
+      ],
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ]
+    }
+  ],
   "action": {
-    "default_title": "Close tabs to the right"
+    "default_title": "Tab tools"
   }
 }

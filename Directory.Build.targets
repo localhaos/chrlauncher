@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Target Name="PrepareTaskbarProfileLaunch" BeforeTargets="ClCompile">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\tools\prepare-taskbar-profile.ps1&quot;" />
+  </Target>
+</Project>

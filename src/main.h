@@ -45,7 +45,7 @@ DEFINE_GUID (GUID_TrayIcon, 0xEAD41630, 0x90BB, 0x4836, 0x82, 0x41, 0xAE, 0xAE, 
 #define CHROMIUM_BACKGROUND_RESOURCE_SAVING_COMMAND_LINE L""
 #define CHROMIUM_BACKGROUND_RESOURCE_SAVING_FEATURES L"IntensiveWakeUpThrottling,CalculateNativeWinOcclusion"
 #define CHROMIUM_RENDERER_SAFETY_COMMAND_LINE L"--site-per-process --js-flags=--stack_size=512"
-#define CHROMIUM_SCROLLABLE_TABS_FEATURES L"ScrollableTabStrip:minimum_tab_width/72"
+#define CHROMIUM_SCROLLABLE_TABS_FEATURES L"ScrollableTabStrip:minimum_tab_width/72/tab_width/medium/scrollable_tabstrip_min_width/72,ScrollableTabStripWithDragging"
 #define APP_ADDONS_DIRECTORY L"Addons"
 #define APP_ADDONS_CONFIG_FILE L"Config.ini"
 #define APP_ADDONS_PARAMETERS_FILE L"Parameters.ini"
@@ -58,8 +58,8 @@ DEFINE_GUID (GUID_TrayIcon, 0xEAD41630, 0x90BB, 0x4836, 0x82, 0x41, 0xAE, 0xAE, 
 #define CHROMIUM_DNS_BLOCKLIST_CACHE_DIRECTORY L"Addons\\dnsblock"
 #define CHROME_PLUS_DIRECTORY L"Addons\\chrome_plus"
 #define CHROMIUM_DNS_BLOCKLIST_SINK L"0.0.0.0"
-#define CHROMIUM_GOOGLE_WEBSTORE_COMMAND_LINE L"--user-agent=\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36\" --apps-gallery-url=https://chromewebstore.google.com/ --apps-gallery-update-url=https://clients2.google.com/service/update2/crx --apps-gallery-download-url=\"https://clients2.google.com/service/update2/crx?response=redirect&prodversion=150.0&x=id=%s&installsource=ondemand&uc\""
-#define CHROMIUM_GOOGLE_WEBSTORE_DISABLE_FEATURES L"UserAgentClientHint"
+#define CHROMIUM_GOOGLE_WEBSTORE_COMMAND_LINE L"--user-agent=\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36\" --disable-blink-features=UserAgentClientHint --google-base-url=https://www.google.com/ --apps-gallery-url=https://chromewebstore.google.com/ --apps-gallery-update-url=https://clients2.google.com/service/update2/crx --apps-gallery-download-url=\"https://clients2.google.com/service/update2/crx?response=redirect&prodversion=150.0&x=id=%s&installsource=ondemand&uc\""
+#define CHROMIUM_GOOGLE_WEBSTORE_DISABLE_FEATURES L"UserAgentClientHint,UserAgentClientHints"
 
 typedef struct _BROWSER_INFORMATION
 {

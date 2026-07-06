@@ -95,7 +95,20 @@ PR_STRING _app_get_addons_directory ()
 
 PR_STRING _app_get_config_path ()
 {
-	return _app_create_app_relative_path (APP_ADDONS_DIRECTORY L"\\" APP_ADDONS_CONFIG_FILE);
+	PR_STRING root_config;
+	PR_STRING addons_config;
+
+	root_config = _app_create_app_relative_path (APP_ADDONS_CONFIG_FILE);
+
+	if (root_config && _r_fs_exists (&root_config->sr))
+		return root_config;
+
+	addons_config = _app_create_app_relative_path (APP_ADDONS_DIRECTORY L"\\" APP_ADDONS_CONFIG_FILE);
+
+	if (root_config)
+		_r_obj_dereference (root_config);
+
+	return addons_config;
 }
 
 VOID _app_ensure_directory (
@@ -282,7 +295,6 @@ static VOID _app_copy_legacy_config_if_needed (
 		_r_obj_dereference (legacy_config_path);
 	}
 }
-
 
 static VOID _app_ensure_config_section_alias (
 	_In_ PR_STRING config_path
