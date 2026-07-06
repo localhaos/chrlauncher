@@ -1,7 +1,13 @@
 chrlauncher portable layout
 ==========================
 
-Run chrlauncher.x64.exe from the artifact root directory only.
+This branch builds a conservative low-memory restore artifact based on the
+last runner-root version that behaved correctly for local path resolution.
+
+Run chrlauncher.x64.exe from the artifact root directory only, or use:
+
+  RUN_CHRLAUNCHER_X64.bat
+
 Do not move the executable into bin\aa, bin\chrome, or any nested directory.
 
 Correct layout after extracting the GitHub Actions artifact:
@@ -12,6 +18,21 @@ Correct layout after extracting the GitHub Actions artifact:
   profile\                  created/used by Chromium
   bin\chrome.exe             downloaded/installed by chrlauncher
   bin.old\                   temporary old install folder during update
+
+Low-memory profile
+------------------
+
+The low-memory artifact disables optional Chromium startup features that can
+increase memory pressure on systems with a small or disabled pagefile:
+
+  ChromiumEnableLosslessOptimization=false
+  ChromiumEnableTextPerformanceFixes=false
+  ChromiumIgnoreGpuBlocklist=false
+  ChromiumEnableScrollableTabs=false
+  ChromiumEnableCloseTabsRightExtension=false
+  ChromiumEnableAutofillPasswordFixes=false
+
+This is intended to reduce STATUS_NO_MEMORY / 0xC0000017 during startup.
 
 Why this matters
 ----------------
