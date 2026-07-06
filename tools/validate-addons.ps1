@@ -61,29 +61,36 @@ if ($configCommand -notlike '*--disable-features=HardwareMediaKeyHandling,Global
 
 $tabTools = Join-Path $Addons 'extensions\close-tabs-right'
 Assert-Dir $tabTools
-$tabManifest = Read-Json (Join-Path $tabTools 'manifest.json')
+$tabManifestPath = Join-Path $tabTools 'manifest.json'
+$tabManifest = Read-Json $tabManifestPath
 if ($tabManifest) {
     if ($tabManifest.name -ne 'chrlauncher Tab Tools') { Add-Err 'Tab Tools manifest name mismatch.' }
     foreach ($file in @(
         'service_worker.js',
         'site_test_content.js',
         'chatgpt_download_content.js',
-        'chatgpt_download_page_hook.js',
-        'devtools.html',
-        'devtools.js',
-        'devtools_panel.html',
-        'devtools_panel.css',
-        'devtools_panel.js'
+        'chatgpt_download_page_hook.js'
     )) {
         Assert-File (Join-Path $tabTools $file)
     }
-    foreach ($stale in @('cf_manual_helper.js', 'slurg.html', 'slurg.css', 'slurg.js', 'slurg_data.js')) {
+    foreach ($stale in @('cf_manual_helper.js', 'slurg.html', 'slurg.css', 'slurg.js', 'slurg_data.js', 'devtools.html', 'devtools.js', 'devtools_panel.html', 'devtools_panel.css', 'devtools_panel.js')) {
         if (Test-Path -LiteralPath (Join-Path $tabTools $stale)) { Add-Err "Stale file still in Tab Tools: $stale" }
     }
-    $manifestText = Get-Content -LiteralPath (Join-Path $tabTools 'manifest.json') -Raw -Encoding UTF8
+    $manifestText = Get-Content -LiteralPath $tabManifestPath -Raw -Encoding UTF8
+    if ($manifestText -match '"devtools_page"') { Add-Err 'Tab Tools must not register devtools_page in production.' }
     if ($manifestText -match 'http://\*/\*|https://\*/\*') { Add-Err 'Tab Tools should not request broad all-host permissions.' }
-    $devtoolsText = Get-Content -LiteralPath (Join-Path $tabTools 'devtools.js') -Raw -Encoding UTF8
-    if ($devtoolsText -notlike '*facebook.com*') { Add-Err 'DevTools Lag Guard must stay disabled on Facebook sessions.' }
+}
+
+$devtoolsLag = Join-Path $Addons 'devtools_lag_guard'
+Assert-Dir $devtoolsLag
+$devtoolsManifest = Read-Json (Join-Path $devtoolsLag 'manifest.json')
+if ($devtoolsManifest) {
+    if ($devtoolsManifest.name -ne 'chrlauncher DevTools Lag Guard') { Add-Err 'DevTools Lag Guard manifest name mismatch.' }
+    foreach ($file in @('devtools.html', 'devtools.js', 'devtools_panel.html', 'devtools_panel.css', 'devtools_panel.js', 'README.md')) {
+        Assert-File (Join-Path $devtoolsLag $file)
+    }
+    $devtoolsText = Get-Content -LiteralPath (Join-Path $devtoolsLag 'devtools.js') -Raw -Encoding UTF8
+    if ($devtoolsText -notlike '*facebook.com*') { Add-Err 'Optional DevTools Lag Guard must stay disabled on Facebook sessions.' }
 }
 
 $cf = Join-Path $Addons 'cf_manual_helper'
@@ -129,6 +136,7 @@ else {
     foreach ($required in @('addons\extensions\close-tabs-right', 'addons\cf_manual_helper', '--disk-cache-dir', '--disable-background-networking', '--disable-domain-reliability', '--disable-features=HardwareMediaKeyHandling,GlobalMediaControls')) {
         if ($guardCommand -notlike "*$required*") { Add-Err "optimizer_guard command_line missing: $required" }
     }
+    if ($guardCommand -like '*devtools_lag_guard*') { Add-Err 'DevTools Lag Guard must not be loaded by default command_line.' }
 }
 
 $nativeReadme = Join-Path $Addons 'src\README.md'
