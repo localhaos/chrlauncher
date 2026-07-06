@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "chrlauncher Tab Tools",
-  "version": "1.6.0",
-  "description": "Adds tab actions, local site-test helpers, safe Cloudflare diagnostics, ChatGPT download repair, Slurg diagnostics, and DevTools Lag Guard.",
+  "version": "1.6.1",
+  "description": "Adds tab actions, local site-test helpers, safe Cloudflare diagnostics, ChatGPT download repair, and DevTools Lag Guard.",
   "permissions": [
     "contextMenus",
     "downloads",
@@ -21,10 +21,6 @@
     "service_worker": "service_worker.js"
   },
   "devtools_page": "devtools.html",
-  "omnibox": {
-    "keyword": "slurg"
-  },
-  "options_page": "slurg.html",
   "content_scripts": [
     {
       "matches": [
