@@ -45,7 +45,7 @@ DEFINE_GUID (GUID_TrayIcon, 0xEAD41630, 0x90BB, 0x4836, 0x82, 0x41, 0xAE, 0xAE, 
 #define CHROMIUM_BACKGROUND_RESOURCE_SAVING_COMMAND_LINE L""
 #define CHROMIUM_BACKGROUND_RESOURCE_SAVING_FEATURES L"IntensiveWakeUpThrottling,CalculateNativeWinOcclusion"
 #define CHROMIUM_RENDERER_SAFETY_COMMAND_LINE L"--site-per-process --js-flags=--stack_size=512"
-#define CHROMIUM_SCROLLABLE_TABS_FEATURES L"ScrollableTabStrip:minimum_tab_width/72"
+#define CHROMIUM_SCROLLABLE_TABS_FEATURES L"ScrollableTabStrip:minimum_tab_width/72/tab_width/medium/scrollable_tabstrip_min_width/72,ScrollableTabStripWithDragging"
 #define APP_ADDONS_DIRECTORY L"Addons"
 #define APP_ADDONS_CONFIG_FILE L"Config.ini"
 #define APP_ADDONS_PARAMETERS_FILE L"Parameters.ini"
