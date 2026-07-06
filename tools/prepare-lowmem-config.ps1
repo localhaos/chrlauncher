@@ -14,6 +14,7 @@ if (-not (Test-Path -LiteralPath $config)) {
 $text = Get-Content -LiteralPath $config -Raw
 
 $replacements = [ordered]@{
+    'ChromiumDirectory=.\bin' = 'ChromiumDirectory=.\Chromium'
     'ChromiumEnableLosslessOptimization=true' = 'ChromiumEnableLosslessOptimization=false'
     'ChromiumEnableTextPerformanceFixes=true' = 'ChromiumEnableTextPerformanceFixes=false'
     'ChromiumTextPerformanceCommandLine=--disable-translate --skia-font-cache-limit-mb=64 --skia-resource-cache-limit-mb=128' = 'ChromiumTextPerformanceCommandLine='
@@ -36,6 +37,9 @@ $stamp = @'
 # Safe/low-memory restore profile:
 # This artifact intentionally disables optional startup/GPU/extension flags that can
 # increase memory pressure on systems with a small or disabled pagefile.
+# ChromiumDirectory is moved from .\bin to .\Chromium so the updater never renames
+# or replaces the directory that may contain chrlauncher.x64.exe. This avoids
+# STATUS_IN_PAGE_ERROR / 0xC0000006 when testing from C:\cr\x\bin.
 # For RethinkDNS DoH, do not put sky.rethinkdns.com/1:... into ChromiumDnsBlocklistUrl.
 # Use ChromiumEnableSecureDns/ChromiumSecureDnsUrl only in v7 builds that support it.
 '@
