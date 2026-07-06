@@ -88,12 +88,19 @@ jobs:
         working-directory: x
         run: |
           $ErrorActionPreference = 'Stop'
-          foreach ($path in @('chrlauncher.sln', 'chrlauncher.vcxproj', 'src/app_config.c', 'src/app_paths.c', 'src/app_dns.c', 'tools/prepare-dns-fastcache.ps1')) {
+          foreach ($path in @('chrlauncher.sln', 'chrlauncher.vcxproj', 'Directory.Build.props', 'src/app_config.c', 'src/app_paths.c', 'src/app_dns.c', 'tools/prepare-dns-fastcache.ps1', 'tools/validate-addons.ps1')) {
             if (-not (Test-Path -LiteralPath $path)) {
               Get-ChildItem -Force | Format-Table Mode, Length, Name
               throw "$path missing from checkout path x"
             }
           }
+
+      - name: Validate addons
+        shell: pwsh
+        working-directory: x
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\tools\validate-addons.ps1
 
       - name: Prepare DNS fast cache source
         shell: pwsh
