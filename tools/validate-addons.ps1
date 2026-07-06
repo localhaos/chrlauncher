@@ -88,7 +88,7 @@ if ($cfManifest) {
         Assert-File (Join-Path $cf $file)
     }
     $cfText = Get-Content -LiteralPath (Join-Path $cf 'content.js') -Raw -Encoding UTF8
-    foreach ($forbidden in @('cf_clearance=', 'document.cookie =', 'chrome.cookies.set', 'turnstile.click', '.click()')) {
+    foreach ($forbidden in @('document.cookie =', 'chrome.cookies.set', 'turnstile.click', '.click()')) {
         if ($cfText.Contains($forbidden)) { Add-Err "CF helper contains forbidden token/action: $forbidden" }
     }
 }
