@@ -1,6 +1,8 @@
 chrlauncher portable layout
 ==========================
 
+Rebuild marker: exact runner-root state from 20657d3d, no low-memory config rewrite, no source patching.
+
 Run chrlauncher.x64.exe from the artifact root directory only.
 Do not move the executable into bin\aa, bin\chrome, or any nested directory.
 
