@@ -12,9 +12,7 @@
 #define CFM_DEFAULT_CHROMIUM_DIRECTORY L".\\bin"
 #define CFM_DEFAULT_CHROME_PLUS_DIRECTORY L".\\addons\\chrome_plus"
 #define CFM_CHROME_PLUS_INI L"chrome++.ini"
-#define CFM_CLOSE_TABS_DIR L"%app%\\..\\addons\\extensions\\close-tabs-right"
-#define CFM_HELPER_DIR L"%app%\\..\\addons\\cf_manual_helper"
-#define CFM_COMMAND_LINE L"--load-extension=\"%app%\\..\\addons\\extensions\\close-tabs-right,%app%\\..\\addons\\cf_manual_helper\""
+#define CFM_COMMAND_LINE L"--load-extension=\"%app%\\..\\addons\\extensions\\close-tabs-right,%app%\\..\\addons\\cf_manual_helper\" --disk-cache-dir=\"%app%\\..\\Cache\" --disable-background-networking --disable-domain-reliability"
 
 static BOOL cfm_file_exists(
 	_In_ LPCWSTR path
