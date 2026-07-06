@@ -1,15 +1,29 @@
 {
   "manifest_version": 3,
   "name": "chrlauncher Tab Tools",
-  "version": "1.1.0",
-  "description": "Adds local tab context menu actions for closing tabs to the left or right of the selected tab.",
+  "version": "1.2.0",
+  "description": "Adds tab actions and local site-test cosmetic helpers.",
   "permissions": [
     "contextMenus",
     "tabs"
   ],
+  "host_permissions": [
+    "https://adblock.turtlecute.org/*"
+  ],
   "background": {
     "service_worker": "service_worker.js"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://adblock.turtlecute.org/*"
+      ],
+      "js": [
+        "site_test_content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
   "action": {
     "default_title": "Tab tools"
   }
