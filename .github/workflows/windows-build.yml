@@ -46,6 +46,11 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
 
+      - name: Apply DNS source fixes
+        shell: pwsh
+        working-directory: x
+        run: .\tools\prepare-v7-dns-fixes.ps1
+
       - name: Detect usable MSVC toolset
         id: toolset
         shell: pwsh
@@ -88,7 +93,7 @@ jobs:
         working-directory: x
         run: |
           $ErrorActionPreference = 'Stop'
-          foreach ($path in @('chrlauncher.sln', 'chrlauncher.vcxproj', 'src/app_config.c', 'src/app_paths.c')) {
+          foreach ($path in @('chrlauncher.sln', 'chrlauncher.vcxproj', 'src/app_config.c', 'src/app_paths.c', 'tools/prepare-v7-dns-fixes.ps1')) {
             if (-not (Test-Path -LiteralPath $path)) {
               Get-ChildItem -Force | Format-Table Mode, Length, Name
               throw "$path missing from checkout path x"
