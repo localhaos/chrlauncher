@@ -8,6 +8,12 @@ echo chrlauncher local MSBuild helper
 echo ============================================================
 echo Root: "%CD%"
 
+if exist "%CD%\tools\prepare-v7-dns-fixes.ps1" (
+    echo [PREP] Applying v7 DNS source fixes...
+    powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%CD%\tools\prepare-v7-dns-fixes.ps1"
+    if errorlevel 1 goto :fail
+)
+
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VCVARS="
 
