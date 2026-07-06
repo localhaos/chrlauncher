@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - main
+      - upgrade/**
   pull_request:
     branches:
       - master
@@ -45,6 +46,11 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
+
+      - name: Apply local runtime patches
+        shell: pwsh
+        working-directory: x
+        run: .\tools\apply-local-patches.ps1
 
       - name: Detect usable MSVC toolset
         id: toolset
@@ -88,7 +94,7 @@ jobs:
         working-directory: x
         run: |
           $ErrorActionPreference = 'Stop'
-          foreach ($path in @('chrlauncher.sln', 'chrlauncher.vcxproj', 'src/app_config.c', 'src/app_paths.c')) {
+          foreach ($path in @('chrlauncher.sln', 'chrlauncher.vcxproj', 'src/app_config.c', 'src/app_paths.c', 'patches/runtime-instance-checker.patch')) {
             if (-not (Test-Path -LiteralPath $path)) {
               Get-ChildItem -Force | Format-Table Mode, Length, Name
               throw "$path missing from checkout path x"
