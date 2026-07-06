@@ -52,11 +52,20 @@ function Read-IniValue([string]$Path, [string]$Section, [string]$Key) {
     return $null
 }
 
+function Assert-ManifestKey($Manifest, [string]$Name) {
+    if (-not $Manifest.key -or [string]$Manifest.key -notmatch '^MIIB') {
+        Add-Err "$Name manifest missing stable public key. Google sync can detach unpacked extension IDs."
+    }
+}
+
 Assert-Dir $Addons
 
 $configCommand = Read-IniValue (Join-Path $Root 'bin\Config.ini') 'chrlauncher' 'ChromiumCommandLine'
 if ($configCommand -notlike '*--disable-features=HardwareMediaKeyHandling,GlobalMediaControls*') {
     Add-Err 'Config.ini missing media/DevTools crash guard disable-features.'
+}
+if ($configCommand -notlike '*--disable-sync-types=Extensions,Apps,ExtensionSettings*') {
+    Add-Err 'Config.ini missing extension-sync guard.'
 }
 
 $tabTools = Join-Path $Addons 'extensions\close-tabs-right'
@@ -65,6 +74,7 @@ $tabManifestPath = Join-Path $tabTools 'manifest.json'
 $tabManifest = Read-Json $tabManifestPath
 if ($tabManifest) {
     if ($tabManifest.name -ne 'chrlauncher Tab Tools') { Add-Err 'Tab Tools manifest name mismatch.' }
+    Assert-ManifestKey $tabManifest 'Tab Tools'
     foreach ($file in @(
         'service_worker.js',
         'site_test_content.js',
@@ -86,6 +96,7 @@ Assert-Dir $devtoolsLag
 $devtoolsManifest = Read-Json (Join-Path $devtoolsLag 'manifest.json')
 if ($devtoolsManifest) {
     if ($devtoolsManifest.name -ne 'chrlauncher DevTools Lag Guard') { Add-Err 'DevTools Lag Guard manifest name mismatch.' }
+    Assert-ManifestKey $devtoolsManifest 'DevTools Lag Guard'
     foreach ($file in @('devtools.html', 'devtools.js', 'devtools_panel.html', 'devtools_panel.css', 'devtools_panel.js', 'README.md')) {
         Assert-File (Join-Path $devtoolsLag $file)
     }
@@ -99,6 +110,7 @@ $cfManifestPath = Join-Path $cf 'manifest.json'
 $cfManifest = Read-Json $cfManifestPath
 if ($cfManifest) {
     if ($cfManifest.name -ne 'chrlauncher CF Manual Helper') { Add-Err 'CF helper manifest name mismatch.' }
+    Assert-ManifestKey $cfManifest 'CF helper'
     foreach ($file in @('content.js', 'popup.html', 'popup.css', 'popup.js', 'README.md')) {
         Assert-File (Join-Path $cf $file)
     }
@@ -111,6 +123,19 @@ if ($cfManifest) {
         if ($cfText.Contains($forbidden)) { Add-Err "CF helper contains forbidden token/action: $forbidden" }
     }
     if ($cfText -notlike '*MAX_OBSERVER_LIFETIME_MS*') { Add-Err 'CF helper observer must remain time-bounded.' }
+}
+
+$extensionGuard = Join-Path $Addons 'extension_guard'
+Assert-Dir $extensionGuard
+foreach ($file in @('README.md', 'repair-extensions-after-sync.ps1', 'repair-extensions-after-sync.bat')) {
+    Assert-File (Join-Path $extensionGuard $file)
+}
+$repairScript = Join-Path $extensionGuard 'repair-extensions-after-sync.ps1'
+if (Test-Path -LiteralPath $repairScript) {
+    $repairText = Get-Content -LiteralPath $repairScript -Raw -Encoding UTF8
+    foreach ($required in @('--disable-sync-types=Extensions,Apps,ExtensionSettings', 'addons\extensions\close-tabs-right', 'addons\cf_manual_helper')) {
+        if ($repairText -notlike "*$required*") { Add-Err "extension_guard repair missing: $required" }
+    }
 }
 
 $slurg = Join-Path $Addons 'slurg'
@@ -133,7 +158,7 @@ $guardIni = Join-Path $optimizer 'optimizer_guard.ini'
 $guardCommand = Read-IniValue $guardIni 'chrome_plus' 'command_line'
 if (-not $guardCommand) { Add-Err 'optimizer_guard.ini missing [chrome_plus] command_line.' }
 else {
-    foreach ($required in @('addons\extensions\close-tabs-right', 'addons\cf_manual_helper', '--disk-cache-dir', '--disable-background-networking', '--disable-domain-reliability', '--disable-features=HardwareMediaKeyHandling,GlobalMediaControls')) {
+    foreach ($required in @('addons\extensions\close-tabs-right', 'addons\cf_manual_helper', '--disk-cache-dir', '--disable-background-networking', '--disable-domain-reliability', '--disable-features=HardwareMediaKeyHandling,GlobalMediaControls', '--disable-sync-types=Extensions,Apps,ExtensionSettings')) {
         if ($guardCommand -notlike "*$required*") { Add-Err "optimizer_guard command_line missing: $required" }
     }
     if ($guardCommand -like '*devtools_lag_guard*') { Add-Err 'DevTools Lag Guard must not be loaded by default command_line.' }
