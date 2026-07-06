@@ -1,0 +1,60 @@
+name: Restore x64 portable
+
+on:
+  push:
+    branches:
+      - restore/**
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Restore x64 portable
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout chrlauncher
+        uses: actions/checkout@v4
+        with:
+          path: x
+          submodules: false
+
+      - name: Checkout routine dependency
+        uses: actions/checkout@v4
+        with:
+          repository: henrypp/routine
+          path: routine
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Prepare portable root source
+        shell: pwsh
+        working-directory: x
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File tools/prepare-restore-source.ps1
+
+      - name: Build x64
+        shell: pwsh
+        working-directory: x
+        run: |
+          $ErrorActionPreference = 'Stop'
+          msbuild chrlauncher.sln /m /p:Configuration=Release /p:Platform=x64 /p:PreferredToolArchitecture=x64 /verbosity:minimal
+
+      - name: Verify portable layout
+        shell: pwsh
+        working-directory: x
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($path in @('bin\chrlauncher.x64.exe', 'bin\RUN_CHRLAUNCHER_X64.bat', 'bin\README_PORTABLE_LAYOUT.txt', 'bin\Addons\config.ini')) {
+            if (-not (Test-Path -LiteralPath $path)) {
+              Get-ChildItem -Path bin -Recurse -ErrorAction SilentlyContinue | Format-Table FullName, Length
+              throw "Missing portable artifact file: $path"
+            }
+          }
+          Get-Item -LiteralPath 'bin\chrlauncher.x64.exe' | Format-List FullName, Length, LastWriteTimeUtc
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrlauncher-restore-x64-portable-rootfix
+          path: x/bin/**
+          if-no-files-found: error
