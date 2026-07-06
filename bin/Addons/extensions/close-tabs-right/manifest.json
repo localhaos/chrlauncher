@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu6bxuqSLQZ5QzE7KyDjVKsdv8Arbk4rTVm+bLt1LgIxpHY5TOPwKSQhH8dCtzEx9T/8ym0MVg+zgTzkCgzRLZNpcQIZu7oCJQ29xg1eeq5bjAptZ0ogato3Mglr8EkCEcMRyQr+xHsePafP9spwoW7VHQefPzUZzy8iKBUHZGnaVmr/DWe4YjP8GgQxlpUL5L9LGM6z4VXepAgfpzpx2fuqrlfxVCRiYBgP+hU0x6/xjRkcX617cxgi9Pr65X+WpsIkkoIcSYuxrbARIrkXfJJLq4+288MGLLnA5muI9cFzlvV7DCeaH/JrKVXOQ0o25dQDVaGYxIa2Xd/NFrdhGFQIDAQAB",
   "name": "chrlauncher Tab Tools",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "description": "Adds tab actions, local site-test helpers, and ChatGPT download repair. DevTools helpers are kept as optional standalone addons.",
   "permissions": [
     "contextMenus",
