@@ -2,12 +2,7 @@
 
 const MENU_CLOSE_LEFT = "close-tabs-left";
 const MENU_CLOSE_RIGHT = "close-tabs-right";
-const MENU_OPEN_SLURG = "open-slurg-diagnostics";
 const CHATGPT_STATE_KEY = "chatgpt_download_fix_state";
-
-function openSlurgDiagnostics() {
-  chrome.tabs.create({ url: chrome.runtime.getURL("slurg.html") });
-}
 
 function setupMenus() {
   chrome.contextMenus.removeAll(() => {
@@ -21,12 +16,6 @@ function setupMenus() {
       id: MENU_CLOSE_RIGHT,
       title: "Zamknij karty po prawej",
       contexts: ["tab", "action"]
-    });
-
-    chrome.contextMenus.create({
-      id: MENU_OPEN_SLURG,
-      title: "Slurg: chrome:// diagnostics",
-      contexts: ["action"]
     });
   });
 }
@@ -174,17 +163,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     closeTabsToLeft(tab);
   } else if (info.menuItemId === MENU_CLOSE_RIGHT) {
     closeTabsToRight(tab);
-  } else if (info.menuItemId === MENU_OPEN_SLURG) {
-    openSlurgDiagnostics();
   }
 });
 chrome.action.onClicked.addListener(closeTabsToRight);
-
-if (chrome.omnibox) {
-  chrome.omnibox.onInputEntered.addListener(() => {
-    openSlurgDiagnostics();
-  });
-}
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || typeof message !== "object") {
@@ -206,12 +187,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse(state && state[CHATGPT_STATE_KEY] ? state[CHATGPT_STATE_KEY] : {});
     });
     return true;
-  }
-
-  if (message.type === "OPEN_SLURG") {
-    openSlurgDiagnostics();
-    sendResponse({ ok: true });
-    return false;
   }
 
   return false;
