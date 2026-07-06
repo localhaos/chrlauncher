@@ -20,13 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - Win32
-          - x64
         include:
-          - platform: Win32
-            artifact-name: chrlauncher-x86
-            exe-name: chrlauncher.x86.exe
           - platform: x64
             artifact-name: chrlauncher-x64
             exe-name: chrlauncher.x64.exe
