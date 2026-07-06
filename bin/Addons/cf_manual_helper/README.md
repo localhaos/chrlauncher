@@ -1,20 +1,34 @@
-# cf_manual_helper
+# CF Manual Helper
 
-Minimalist safe helper for Cloudflare-protected pages.
+Standalone chrlauncher Addon implemented as a small local Chromium extension.
 
-This addon intentionally does not bypass Cloudflare, does not click Turnstile, does not generate `cf_clearance`, does not mirror requests, and does not evade anti-bot controls.
+Path:
 
-What it does:
+```text
+Addons\cf_manual_helper\
+```
 
-- detects common Cloudflare challenge/interstitial signals in a normal user browser session;
-- shows a local diagnostic overlay;
-- reminds the user to solve the challenge manually and only reuse sessions they are authorized to use.
+Purpose:
 
-Why it exists:
+- detect common Cloudflare/security challenge pages;
+- show a local manual-session diagnostic overlay;
+- store the last diagnostics in extension storage;
+- let the user copy diagnostics from the page overlay or extension popup.
 
-The referenced `sarperavci/CloudflareBypassForScraping` project describes cookie generation, request mirroring, stealth browser use, and challenge solving. Those are not included here. This repository keeps a compliant manual-session helper only.
+Explicit non-goals:
 
-Implementation location:
+- no Turnstile auto-clicking;
+- no challenge solving;
+- no `cf_clearance` generation;
+- no request mirroring;
+- no stealth browser or anti-bot bypass.
 
-- loaded through `bin/Addons/extensions/close-tabs-right/manifest.json`;
-- script: `bin/Addons/extensions/close-tabs-right/cf_manual_helper.js`.
+Loading:
+
+`chrome_plus` receives a comma-separated `--load-extension` value through `chrome++.ini`:
+
+```text
+%app%\..\addons\extensions\close-tabs-right,%app%\..\addons\cf_manual_helper
+```
+
+The same value is protected by `Addons\optimizer_guard\optimizer_guard.ini` so updates do not remove the addon from the startup command line.
