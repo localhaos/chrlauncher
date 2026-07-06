@@ -4,6 +4,7 @@
 #include "app_config.h"
 #include "app_paths.h"
 #include "cfgread.h"
+#include "xallocator/xallocator.c"
 #include "cfgread.c"
 
 typedef enum _APP_CONFIG_FILE_KIND
