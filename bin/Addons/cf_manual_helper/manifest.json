@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "chrlauncher CF Manual Helper",
+  "version": "1.0.0",
+  "description": "Detects security challenge pages and shows manual-session diagnostics without bypassing or solving challenges.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "CF Manual Helper",
+    "default_popup": "popup.html"
+  }
+}
