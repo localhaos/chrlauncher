@@ -1,0 +1,7 @@
+{
+  "manifest_version": 3,
+  "name": "chrlauncher DevTools Lag Guard",
+  "version": "1.0.0",
+  "description": "Optional DevTools panel for heavy pages. Not loaded by default to avoid F12 crashes on media-heavy sites.",
+  "devtools_page": "devtools.html"
+}
