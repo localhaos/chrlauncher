@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxfP2FTZrCdpLWiXFAOao3GXmbNdvceMS+os45LO6d5o+CWmik7NVMX6k1H55/VT3bYM0yo3yY3AaaXTHec2Tc8ofS/mg1+HJumCkL3rzIeaL7QHQ5yiYZefksgsp1lR7jYHy+0G+WNcPGDITxoJdCwwFjTGP3cfPlhMtDp6kN4M5rF7lbZbj2S3vmg9xXVh1rrPB0pQBX5fg8KLw3ZNJIXMVaCqJKQLwALLS+KDnCHUk+ghe2nE4PAYfiXgltPj1u3ms3olAGYc0V/DGCuoxwniaPnIxNMKb2m6cfWiB/hSsshl6Py15b9lzmGFipK489mvjoEkKgU1LYwpHXPP0jwIDAQAB",
   "name": "chrlauncher CF Manual Helper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Detects security challenge pages and shows manual-session diagnostics without bypassing or solving challenges.",
   "permissions": [
     "storage"
