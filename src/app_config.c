@@ -3,8 +3,7 @@
 
 #include "app_config.h"
 #include "app_paths.h"
-
-#define APP_CONFIG_READ_BUFFER_CCH 32768
+#include "cfgread.h"
 
 typedef enum _APP_CONFIG_FILE_KIND
 {
@@ -154,33 +153,30 @@ static PR_STRING _app_config_create_path_for_kind (
 
 static PR_STRING _app_config_read_file_string_section (
 	_In_ PR_STRING path,
-	_In_ LPCWSTR section_name,
+	_In_opt_ LPCWSTR section_name,
 	_In_ LPCWSTR key_name
 )
 {
-	static const WCHAR sentinel[] = L"{53E7F40C-28DF-48D8-B7F4-CHRLAUNCHER-MISSING}";
-	WCHAR buffer[APP_CONFIG_READ_BUFFER_CCH];
-	DWORD length;
+	PCFGREAD file;
+	LPCWSTR value;
+	PR_STRING result = NULL;
 
-	if (_r_obj_isstringempty (path) || !section_name || !section_name[0] || !key_name || !key_name[0])
+	if (_r_obj_isstringempty (path) || !key_name || !key_name[0])
 		return NULL;
 
-	length = GetPrivateProfileStringW (
-		section_name,
-		key_name,
-		sentinel,
-		buffer,
-		RTL_NUMBER_OF (buffer),
-		path->buffer
-	);
+	file = cfgread_open (path);
 
-	if (length == 0 && lstrcmpW (buffer, sentinel) == 0)
+	if (!file)
 		return NULL;
 
-	if (lstrcmpW (buffer, sentinel) == 0)
-		return NULL;
+	value = cfgread_get (file, section_name, key_name);
 
-	return _r_obj_createstring_ex (buffer, length * sizeof (WCHAR));
+	if (value && value[0])
+		result = _r_obj_createstring (value);
+
+	cfgread_close (file);
+
+	return result;
 }
 
 static PR_STRING _app_config_read_file_string (
@@ -205,9 +201,16 @@ static PR_STRING _app_config_read_file_string (
 	}
 
 	if (!current_section || lstrcmpiW (current_section, APP_NAME_SHORT) != 0)
-		return _app_config_read_file_string_section (path, APP_NAME_SHORT, key_name);
+	{
+		value = _app_config_read_file_string_section (path, APP_NAME_SHORT, key_name);
 
-	return NULL;
+		if (value)
+			return value;
+	}
+
+	// Split portable configs in this fork are intentionally flat files.
+	// Unlike GetPrivateProfileStringW, the local parser can read global keys.
+	return _app_config_read_file_string_section (path, NULL, key_name);
 }
 
 static PR_STRING _app_config_read_split_string (
@@ -229,7 +232,7 @@ static PR_STRING _app_config_read_split_string (
 
 	if (!value && kind != AppConfigFileBase)
 	{
-		// Compatibility fallback for older single-file Addons\\Config.ini layouts.
+		// Compatibility fallback for older single-file Addons\Config.ini layouts.
 		path = _app_get_config_path ();
 
 		if (path)
