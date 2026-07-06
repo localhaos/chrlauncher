@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtK0LjZj49ui/anSpebcxXkH59kJopqPE13nzrmH/HbeY6pWhv/ekHOmcwZQPvF9mYeuvpPvm8DsWPVAE+cX25GZ4yxOP71NWnGi1VQW0JhFmlWNUYp05c8dKUwtzJ/lS7jkbPNPPbIQ6xbgXJFBu23lO3R1NpsNgUPwUX41U4UVmITH2tl4+flyVTTnBC7OZWipmlxzewikYfjyQPJ2sQyaDOf34RNrGI31EUsigrVRbeNPD4AtPvDXO2/2liiqnlLt2sfLeN1fEzLX0OYEcc83/g5kJ2Y9wcDuaGGPeebF6wPa3x0lkOLBG4MWHUJjr880nTcsDX3eLNo3tR6E3hQIDAQAB",
   "name": "chrlauncher DevTools Lag Guard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Optional DevTools panel for heavy pages. Not loaded by default to avoid F12 crashes on media-heavy sites.",
   "devtools_page": "devtools.html"
 }
