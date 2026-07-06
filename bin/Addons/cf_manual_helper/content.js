@@ -4,8 +4,22 @@
   const ROOT_ID = "chrlauncher-cf-manual-helper-root";
   const HIDDEN_KEY = "chrlauncher_cf_manual_helper_hidden_until_reload";
   const STATE_KEY = "chrlauncher_cf_manual_helper_last_state";
-  const SCAN_DELAY_MS = 750;
-  const MAX_SCANS_AFTER_DETECTION = 8;
+  const SCAN_DELAY_MS = 1500;
+  const MAX_SCANS_AFTER_DETECTION = 4;
+  const MAX_TOTAL_SCANS = 12;
+  const MAX_HTML_CHARS = 60000;
+  const MAX_TEXT_CHARS = 8000;
+  const MAX_OBSERVER_LIFETIME_MS = 15000;
+  const EXCLUDED_HOST_SUFFIXES = [
+    "facebook.com",
+    "fbcdn.net",
+    "messenger.com",
+    "instagram.com",
+    "whatsapp.com",
+    "youtube.com",
+    "spotify.com",
+    "soundcloud.com"
+  ];
 
   if (window.__chrlauncherCfManualHelperLoaded) {
     return;
@@ -13,13 +27,24 @@
 
   window.__chrlauncherCfManualHelperLoaded = true;
 
-  let scanTimer = 0;
-  let detectionCount = 0;
-  let observer = null;
-
   function lower(value) {
     return String(value || "").toLowerCase();
   }
+
+  function isExcludedHost(hostname) {
+    const host = lower(hostname);
+    return EXCLUDED_HOST_SUFFIXES.some((suffix) => host === suffix || host.endsWith("." + suffix));
+  }
+
+  if (isExcludedHost(location.hostname)) {
+    return;
+  }
+
+  let scanTimer = 0;
+  let detectionCount = 0;
+  let totalScans = 0;
+  let observer = null;
+  let observerDeadline = Date.now() + MAX_OBSERVER_LIFETIME_MS;
 
   function includesAny(value, needles) {
     const text = lower(value);
@@ -32,22 +57,25 @@
       return "";
     }
 
-    return String(body.innerText || body.textContent || "").slice(0, 24000);
+    return String(body.innerText || body.textContent || "").slice(0, MAX_TEXT_CHARS);
   }
 
   function collectSignals() {
     const signals = [];
     const title = document.title || "";
-    const html = document.documentElement ? document.documentElement.innerHTML.slice(0, 240000) : "";
+    const html = document.documentElement ? document.documentElement.innerHTML.slice(0, MAX_HTML_CHARS) : "";
     const text = visibleTextSample();
     const metas = Array.from(document.querySelectorAll("meta[name],meta[http-equiv],meta[content]"))
+      .slice(0, 80)
       .map((meta) => [meta.name, meta.httpEquiv, meta.content].join(" "))
       .join("\n");
     const scripts = Array.from(document.scripts || [])
+      .slice(0, 120)
       .map((script) => script.src || "")
       .filter(Boolean)
       .join("\n");
     const iframes = Array.from(document.querySelectorAll("iframe[src]"))
+      .slice(0, 80)
       .map((frame) => frame.src || "")
       .join("\n");
 
@@ -239,15 +267,27 @@
     (document.documentElement || document.body).appendChild(host);
   }
 
+  function stopObserver() {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+  }
+
   function scan() {
     scanTimer = 0;
+    totalScans += 1;
 
     if (hiddenUntilReload()) {
+      stopObserver();
       return;
     }
 
     const signals = collectSignals();
     if (!signals.length) {
+      if (totalScans >= MAX_TOTAL_SCANS || Date.now() > observerDeadline) {
+        stopObserver();
+      }
       return;
     }
 
@@ -256,9 +296,8 @@
     saveState(state);
     renderPanel(state);
 
-    if (detectionCount >= MAX_SCANS_AFTER_DETECTION && observer) {
-      observer.disconnect();
-      observer = null;
+    if (detectionCount >= MAX_SCANS_AFTER_DETECTION) {
+      stopObserver();
     }
   }
 
@@ -275,6 +314,7 @@
   if (document.documentElement) {
     observer = new MutationObserver(scheduleScan);
     observer.observe(document.documentElement, { childList: true, subtree: true });
+    window.setTimeout(stopObserver, MAX_OBSERVER_LIFETIME_MS + 1000);
   }
 
   document.addEventListener("DOMContentLoaded", scheduleScan, { once: true });
