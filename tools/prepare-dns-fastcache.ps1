@@ -132,7 +132,6 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 	PR_STRING blocklist_url = NULL;
 	PR_STRING cached_arguments = NULL;
 	PR_STRING host_arguments = NULL;
-	PR_STRING next_rules;
 	PR_STRING return_arguments = NULL;
 	PR_STRING rules = NULL;
 	PR_STRING secure_dns_arguments = NULL;
