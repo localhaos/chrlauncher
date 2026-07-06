@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "chrlauncher Tab Tools",
-  "version": "1.6.1",
-  "description": "Adds tab actions, local site-test helpers, safe Cloudflare diagnostics, ChatGPT download repair, and DevTools Lag Guard.",
+  "version": "1.6.2",
+  "description": "Adds tab actions, local site-test helpers, ChatGPT download repair, and DevTools Lag Guard.",
   "permissions": [
     "contextMenus",
     "downloads",
@@ -13,9 +13,7 @@
     "https://adblock.turtlecute.org/*",
     "https://chatgpt.com/*",
     "https://chat.openai.com/*",
-    "https://*.oaiusercontent.com/*",
-    "http://*/*",
-    "https://*/*"
+    "https://*.oaiusercontent.com/*"
   ],
   "background": {
     "service_worker": "service_worker.js"
@@ -40,16 +38,6 @@
         "chatgpt_download_content.js"
       ],
       "run_at": "document_start"
-    },
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "js": [
-        "cf_manual_helper.js"
-      ],
-      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
