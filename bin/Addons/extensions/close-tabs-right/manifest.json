@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "chrlauncher Tab Tools",
-  "version": "1.6.3",
-  "description": "Adds tab actions, local site-test helpers, ChatGPT download repair, and DevTools Lag Guard.",
+  "version": "1.6.4",
+  "description": "Adds tab actions, local site-test helpers, and ChatGPT download repair. DevTools helpers are kept as optional standalone addons.",
   "permissions": [
     "contextMenus",
     "downloads",
@@ -18,7 +18,6 @@
   "background": {
     "service_worker": "service_worker.js"
   },
-  "devtools_page": "devtools.html",
   "content_scripts": [
     {
       "matches": [
