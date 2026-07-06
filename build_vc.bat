@@ -44,8 +44,8 @@ if errorlevel 1 goto :fail
 
 set "TOOLSET_ARG="
 if defined VCTargetsPath (
-    if exist "%VCTargetsPath%Platforms\Win32\PlatformToolsets\v145\Toolset.props" set "TOOLSET_ARG=/p:PlatformToolset=v145"
-    if not defined TOOLSET_ARG if exist "%VCTargetsPath%Platforms\Win32\PlatformToolsets\v143\Toolset.props" set "TOOLSET_ARG=/p:PlatformToolset=v143"
+    if exist "%VCTargetsPath%Platforms\x64\PlatformToolsets\v145\Toolset.props" set "TOOLSET_ARG=/p:PlatformToolset=v145"
+    if not defined TOOLSET_ARG if exist "%VCTargetsPath%Platforms\x64\PlatformToolsets\v143\Toolset.props" set "TOOLSET_ARG=/p:PlatformToolset=v143"
 )
 
 if defined TOOLSET_ARG (
@@ -54,17 +54,14 @@ if defined TOOLSET_ARG (
     echo [WARN] No explicit v145/v143 toolset override detected; using project defaults.
 )
 
-for %%P in (Win32 x64) do (
-    echo.
-    echo [BUILD] Release^|%%P
-    msbuild chrlauncher.sln /m /p:Configuration=Release /p:Platform=%%P /p:PreferredToolArchitecture=x64 %TOOLSET_ARG% /verbosity:minimal
-    if errorlevel 1 goto :fail
-)
+echo.
+echo [BUILD] Release^|x64
+msbuild chrlauncher.sln /m /p:Configuration=Release /p:Platform=x64 /p:PreferredToolArchitecture=x64 %TOOLSET_ARG% /verbosity:minimal
+if errorlevel 1 goto :fail
 
 echo.
 echo [OK] Build finished.
-echo Expected outputs:
-echo   bin\chrlauncher.x86.exe
+echo Expected output:
 echo   bin\chrlauncher.x64.exe
 goto :end
 
