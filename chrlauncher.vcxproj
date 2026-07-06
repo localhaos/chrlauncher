@@ -165,7 +165,6 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <IntelJCCErratum>true</IntelJCCErratum>
       <SDLCheck>true</SDLCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
@@ -200,7 +199,6 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <IntelJCCErratum>true</IntelJCCErratum>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <GuardEHContMetadata>true</GuardEHContMetadata>
@@ -277,7 +275,6 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <IntelJCCErratum>true</IntelJCCErratum>
       <SDLCheck>true</SDLCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
@@ -316,7 +313,6 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <IntelJCCErratum>true</IntelJCCErratum>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <GuardEHContMetadata>true</GuardEHContMetadata>
@@ -431,6 +427,7 @@
     <ClCompile Include="src\lzma\XzEnc.c" />
     <ClCompile Include="src\lzma\XzIn.c" />
     <ClCompile Include="src\app_paths.c" />
+    <ClCompile Include="src\app_config.c" />
     <ClCompile Include="src\app_dns.c" />
     <ClCompile Include="src\app_extensions.c" />
     <ClCompile Include="src\main.c" />
@@ -483,6 +480,7 @@
     <ClInclude Include="src\lzma\XzCrc64.h" />
     <ClInclude Include="src\lzma\XzEnc.h" />
     <ClInclude Include="src\app_paths.h" />
+    <ClInclude Include="src\app_config.h" />
     <ClInclude Include="src\app_dns.h" />
     <ClInclude Include="src\app_extensions.h" />
     <ClInclude Include="src\main.h" />

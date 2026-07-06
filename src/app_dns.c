@@ -3,6 +3,7 @@
 
 #include "app_dns.h"
 #include "app_paths.h"
+#include "app_config.h"
 
 PR_STRING _app_download_text_url (
 	_In_ LPCWSTR url
@@ -116,10 +117,10 @@ PR_STRING _app_create_secure_dns_arguments_from_config ()
 	PR_STRING arguments;
 	PR_STRING dns_template;
 
-	if (!_r_config_getboolean (L"ChromiumEnableSecureDns", FALSE))
+	if (!_app_config_getboolean (L"ChromiumEnableSecureDns", FALSE))
 		return NULL;
 
-	dns_template = _r_config_getstringexpand (L"ChromiumSecureDnsUrl", L"");
+	dns_template = _app_config_getstringexpand (L"ChromiumSecureDnsUrl", L"");
 
 	if (!_app_is_valid_secure_dns_template (dns_template))
 	{
@@ -326,8 +327,8 @@ static PR_STRING _app_get_dnsblock_text (
 	if (_r_obj_isstringempty (blocklist_url))
 		return NULL;
 
-	use_cache = _r_config_getboolean (L"ChromiumDnsBlocklistCache", TRUE);
-	max_age_hours = _r_config_getlong (L"ChromiumDnsBlocklistCacheMaxAgeHours", 24);
+	use_cache = _app_config_getboolean (L"ChromiumDnsBlocklistCache", TRUE);
+	max_age_hours = _app_config_getlong (L"ChromiumDnsBlocklistCacheMaxAgeHours", 24);
 
 	if (max_age_hours < 1 || max_age_hours > 24 * 30)
 		max_age_hours = 24;
@@ -507,10 +508,10 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 	if (secure_dns_arguments)
 		return secure_dns_arguments;
 
-	if (!_r_config_getboolean (L"ChromiumEnableDnsBlocklistUrl", FALSE))
+	if (!_app_config_getboolean (L"ChromiumEnableDnsBlocklistUrl", FALSE))
 		return NULL;
 
-	blocklist_url = _r_config_getstringexpand (L"ChromiumDnsBlocklistUrl", L"");
+	blocklist_url = _app_config_getstringexpand (L"ChromiumDnsBlocklistUrl", L"");
 	blocklist_text = _app_get_dnsblock_text (blocklist_url);
 
 	if (blocklist_url)
@@ -524,10 +525,10 @@ PR_STRING _app_create_dns_blocklist_arguments ()
 		return NULL;
 	}
 
-	sink = _r_config_getstring (L"ChromiumDnsBlocklistSink", CHROMIUM_DNS_BLOCKLIST_SINK);
-	max_rules = _r_config_getlong (L"ChromiumDnsBlocklistMaxRules", 256);
-	max_chars = _r_config_getlong (L"ChromiumDnsBlocklistMaxCommandLineChars", 12000);
-	include_subdomains = _r_config_getboolean (L"ChromiumDnsBlocklistIncludeSubdomains", TRUE);
+	sink = _app_config_getstring (L"ChromiumDnsBlocklistSink", CHROMIUM_DNS_BLOCKLIST_SINK);
+	max_rules = _app_config_getlong (L"ChromiumDnsBlocklistMaxRules", 256);
+	max_chars = _app_config_getlong (L"ChromiumDnsBlocklistMaxCommandLineChars", 12000);
+	include_subdomains = _app_config_getboolean (L"ChromiumDnsBlocklistIncludeSubdomains", TRUE);
 
 	if (max_rules <= 0 || max_rules > 2048)
 		max_rules = 256;

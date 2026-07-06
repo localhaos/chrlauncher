@@ -2,6 +2,7 @@
 // Copyright (c) 2015-2026 Henry++
 
 #include "app_extensions.h"
+#include "app_config.h"
 #include "app_paths.h"
 
 static PR_STRING _app_get_existing_extension_directory (
@@ -27,7 +28,7 @@ PR_STRING _app_create_close_tabs_right_extension_arguments ()
 	PR_STRING extension_directory;
 	PR_STRING arguments;
 
-	configured_directory = _r_config_getstringexpand (L"ChromiumCloseTabsRightExtensionDirectory", CHROMIUM_CLOSE_TABS_RIGHT_EXTENSION_DIRECTORY);
+	configured_directory = _app_config_getstringexpand (L"ChromiumCloseTabsRightExtensionDirectory", CHROMIUM_CLOSE_TABS_RIGHT_EXTENSION_DIRECTORY);
 
 	if (!configured_directory)
 		return NULL;

@@ -2,6 +2,7 @@
 // Copyright (c) 2015-2026 Henry++
 
 #include "app_paths.h"
+#include "app_config.h"
 
 #include <shlobj.h>
 
@@ -244,7 +245,7 @@ PR_STRING _app_get_configured_directory (
 	PR_STRING configured_path;
 	PR_STRING resolved_path;
 
-	configured_path = _r_config_getstringexpand (key_name, default_path);
+	configured_path = _app_config_getstringexpand (key_name, default_path);
 	resolved_path = _app_resolve_configured_path (configured_path, default_path, require_existing_directory);
 
 	if (!resolved_path)

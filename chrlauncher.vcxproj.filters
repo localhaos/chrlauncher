@@ -18,6 +18,9 @@
     <ClCompile Include="src\app_paths.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\app_config.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\app_dns.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -177,6 +180,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\app_paths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app_config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\app_dns.h">

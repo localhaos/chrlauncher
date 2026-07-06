@@ -1,4 +1,4 @@
-aio@echo off
+@echo off
 @setlocal enableextensions
 rem @cd /d "%~dp0\..\"
 

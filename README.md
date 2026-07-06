@@ -525,3 +525,8 @@ ChromiumRunAtEnd=true
 - Support: sforce5@mail.ru
 ---
 (c) 2015-2026 Henry++
+
+
+## Split Addons configuration
+
+This fork reads launcher runtime settings from `bin/Addons/Config.ini`, Chromium command-line and feature arguments from `bin/Addons/Parameters.ini`, and Chromium build/update selection from `bin/Addons/Version.ini`. Older single-file `Addons/Config.ini` values remain supported as a compatibility fallback.

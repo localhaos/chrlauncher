@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "app_paths.h"
+#include "app_config.h"
 #include "app_dns.h"
 #include "app_extensions.h"
 #include "rapp.h"
@@ -271,7 +272,7 @@ VOID _app_delete (
 {
 	NTSTATUS status;
 
-	if (_r_config_getboolean (L"ChromiumDeleteToRecycle", TRUE))
+	if (_app_config_getboolean (L"ChromiumDeleteToRecycle", TRUE))
 	{
 		status = _r_fs_deleterecycle (path);
 	}
@@ -485,7 +486,7 @@ ULONG _app_get_workqueue_threads ()
 	SYSTEM_INFO system_info;
 	LONG threads;
 
-	threads = _r_config_getlong (L"LauncherWorkQueueThreads", 0);
+	threads = _app_config_getlong (L"LauncherWorkQueueThreads", 0);
 
 	if (threads == INT_ERROR || threads <= 0)
 	{
@@ -557,7 +558,7 @@ VOID _app_apply_profile_picker_hook (
 	_Inout_ PBROWSER_INFORMATION pbi
 )
 {
-	if (!_r_config_getboolean (L"ChromiumShowProfilePickerOnTaskbarLaunch", TRUE))
+	if (!_app_config_getboolean (L"ChromiumShowProfilePickerOnTaskbarLaunch", TRUE))
 		return;
 
 	if (pbi->is_hasurls || pbi->is_hasprofiledir)
@@ -584,7 +585,7 @@ BOOLEAN _app_apply_last_profile_taskbar_hook (
 {
 	PR_STRING profile_argument;
 
-	if (!_r_config_getboolean (L"ChromiumUseLastProfileOnTaskbarLaunch", TRUE))
+	if (!_app_config_getboolean (L"ChromiumUseLastProfileOnTaskbarLaunch", TRUE))
 		return FALSE;
 
 	if (pbi->is_hasurls || pbi->is_hasprofiledir)
@@ -674,7 +675,7 @@ VOID _app_repair_taskbar_pins (
 	BOOLEAN is_com_initialized = FALSE;
 	BOOLEAN is_modified;
 
-	if (!_r_config_getboolean (L"ChromiumRepairTaskbarPins", TRUE))
+	if (!_app_config_getboolean (L"ChromiumRepairTaskbarPins", TRUE))
 		return;
 
 	if (_r_obj_isstringempty (pbi->binary_path))
@@ -888,8 +889,8 @@ VOID _app_init_browser_info (
 	_r_obj_clearreference ((PVOID_PTR)&pbi->args_str);
 
 	// configure paths
-	binary_dir = _r_config_getstringexpand (L"ChromiumDirectory", L".");
-	binary_name = _r_config_getstring (L"ChromiumBinary", L"chrome.exe");
+	binary_dir = _app_config_getstringexpand (L"ChromiumDirectory", L".");
+	binary_name = _app_config_getstring (L"ChromiumBinary", L"chrome.exe");
 
 	if (!binary_dir || !binary_name)
 	{
@@ -955,7 +956,7 @@ VOID _app_init_browser_info (
 
 	_r_obj_dereference (binary_name);
 
-	binary_dir = _r_config_getstringexpand (L"ChromePlusDirectory", CHROME_PLUS_DIRECTORY);
+	binary_dir = _app_config_getstringexpand (L"ChromePlusDirectory", CHROME_PLUS_DIRECTORY);
 	string = _app_resolve_configured_path (binary_dir, CHROME_PLUS_DIRECTORY, FALSE);
 
 	if (string)
@@ -978,7 +979,7 @@ VOID _app_init_browser_info (
 		_r_obj_dereference (string);
 
 	// Get browser architecture
-	pbi->architecture = _r_config_getlong (L"ChromiumArchitecture", 0);
+	pbi->architecture = _app_config_getlong (L"ChromiumArchitecture", 0);
 
 	if (pbi->architecture != 64 && pbi->architecture != 32)
 	{
@@ -1007,16 +1008,16 @@ VOID _app_init_browser_info (
 		pbi->architecture = 64; // default architecture
 
 	// Set common data
-	browser_type = _r_config_getstring (L"ChromiumType", CHROMIUM_TYPE);
-	browser_arguments = _r_config_getstringexpand (L"ChromiumCommandLine", CHROMIUM_COMMAND_LINE);
+	browser_type = _app_config_getstring (L"ChromiumType", CHROMIUM_TYPE);
+	browser_arguments = _app_config_getstringexpand (L"ChromiumCommandLine", CHROMIUM_COMMAND_LINE);
 
-	if (_r_config_getboolean (L"ChromiumSpoofRegion", FALSE))
+	if (_app_config_getboolean (L"ChromiumSpoofRegion", FALSE))
 	{
-		locale = _r_config_getstring (L"ChromiumSpoofRegionLocale", CHROMIUM_SPOOF_REGION_LOCALE);
-		accept_language = _r_config_getstring (L"ChromiumSpoofRegionAcceptLanguage", CHROMIUM_SPOOF_REGION_ACCEPT_LANGUAGE);
+		locale = _app_config_getstring (L"ChromiumSpoofRegionLocale", CHROMIUM_SPOOF_REGION_LOCALE);
+		accept_language = _app_config_getstring (L"ChromiumSpoofRegionAcceptLanguage", CHROMIUM_SPOOF_REGION_ACCEPT_LANGUAGE);
 		region_arguments = NULL;
 
-		if (_r_config_getboolean (L"ChromiumSpoofUseWindowsLocale", FALSE))
+		if (_app_config_getboolean (L"ChromiumSpoofUseWindowsLocale", FALSE))
 		{
 			windows_locale = _app_get_windows_locale ();
 
@@ -1053,17 +1054,17 @@ VOID _app_init_browser_info (
 		_app_append_browser_arguments (&browser_arguments, region_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumSpoofGeolocation", FALSE))
+	if (_app_config_getboolean (L"ChromiumSpoofGeolocation", FALSE))
 	{
-		geolocation_arguments = _r_config_getstringexpand (L"ChromiumSpoofGeolocationCommandLine", CHROMIUM_SPOOF_GEOLOCATION_COMMAND_LINE);
+		geolocation_arguments = _app_config_getstringexpand (L"ChromiumSpoofGeolocationCommandLine", CHROMIUM_SPOOF_GEOLOCATION_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, geolocation_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumSpoofTimeZone", FALSE))
+	if (_app_config_getboolean (L"ChromiumSpoofTimeZone", FALSE))
 	{
-		timezone_arguments = _r_config_getstringexpand (L"ChromiumSpoofTimeZoneCommandLine", CHROMIUM_SPOOF_TIMEZONE_COMMAND_LINE);
-		timezone_id = _r_config_getstring (L"ChromiumSpoofTimeZoneId", CHROMIUM_SPOOF_TIMEZONE_ID);
+		timezone_arguments = _app_config_getstringexpand (L"ChromiumSpoofTimeZoneCommandLine", CHROMIUM_SPOOF_TIMEZONE_COMMAND_LINE);
+		timezone_id = _app_config_getstring (L"ChromiumSpoofTimeZoneId", CHROMIUM_SPOOF_TIMEZONE_ID);
 
 		if (!_r_obj_isstringempty (timezone_arguments) && !_r_obj_isstringempty (timezone_id))
 		{
@@ -1079,131 +1080,131 @@ VOID _app_init_browser_info (
 		_app_append_browser_arguments (&browser_arguments, timezone_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumSpoofHardwareId", FALSE))
+	if (_app_config_getboolean (L"ChromiumSpoofHardwareId", FALSE))
 	{
-		hardware_id_arguments = _r_config_getstringexpand (L"ChromiumSpoofHardwareIdCommandLine", CHROMIUM_SPOOF_HARDWARE_ID_COMMAND_LINE);
+		hardware_id_arguments = _app_config_getstringexpand (L"ChromiumSpoofHardwareIdCommandLine", CHROMIUM_SPOOF_HARDWARE_ID_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, hardware_id_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableLosslessOptimization", TRUE))
+	if (_app_config_getboolean (L"ChromiumEnableLosslessOptimization", TRUE))
 	{
-		lossless_arguments = _r_config_getstringexpand (L"ChromiumLosslessOptimizationCommandLine", CHROMIUM_LOSSLESS_OPTIMIZATION_COMMAND_LINE);
-		lossless_features = _r_config_getstring (L"ChromiumLosslessOptimizationFeatures", CHROMIUM_LOSSLESS_OPTIMIZATION_FEATURES);
+		lossless_arguments = _app_config_getstringexpand (L"ChromiumLosslessOptimizationCommandLine", CHROMIUM_LOSSLESS_OPTIMIZATION_COMMAND_LINE);
+		lossless_features = _app_config_getstring (L"ChromiumLosslessOptimizationFeatures", CHROMIUM_LOSSLESS_OPTIMIZATION_FEATURES);
 
 		_app_append_browser_arguments (&browser_arguments, lossless_arguments);
 		_app_append_browser_features (&browser_features, lossless_features);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableTextPerformanceFixes", TRUE))
+	if (_app_config_getboolean (L"ChromiumEnableTextPerformanceFixes", TRUE))
 	{
-		text_performance_arguments = _r_config_getstringexpand (L"ChromiumTextPerformanceCommandLine", CHROMIUM_TEXT_PERFORMANCE_COMMAND_LINE);
-		text_disabled_features = _r_config_getstring (L"ChromiumTextPerformanceDisableFeatures", CHROMIUM_TEXT_PERFORMANCE_DISABLE_FEATURES);
+		text_performance_arguments = _app_config_getstringexpand (L"ChromiumTextPerformanceCommandLine", CHROMIUM_TEXT_PERFORMANCE_COMMAND_LINE);
+		text_disabled_features = _app_config_getstring (L"ChromiumTextPerformanceDisableFeatures", CHROMIUM_TEXT_PERFORMANCE_DISABLE_FEATURES);
 
 		_app_append_browser_arguments (&browser_arguments, text_performance_arguments);
 		_app_append_browser_features (&browser_disabled_features, text_disabled_features);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableAggressiveTextPerformanceFixes", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableAggressiveTextPerformanceFixes", FALSE))
 	{
-		text_aggressive_arguments = _r_config_getstringexpand (L"ChromiumAggressiveTextPerformanceCommandLine", CHROMIUM_TEXT_AGGRESSIVE_COMMAND_LINE);
+		text_aggressive_arguments = _app_config_getstringexpand (L"ChromiumAggressiveTextPerformanceCommandLine", CHROMIUM_TEXT_AGGRESSIVE_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, text_aggressive_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableBackgroundResourceSaving", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableBackgroundResourceSaving", FALSE))
 	{
-		background_arguments = _r_config_getstringexpand (L"ChromiumBackgroundResourceSavingCommandLine", CHROMIUM_BACKGROUND_RESOURCE_SAVING_COMMAND_LINE);
-		background_features = _r_config_getstring (L"ChromiumBackgroundResourceSavingFeatures", CHROMIUM_BACKGROUND_RESOURCE_SAVING_FEATURES);
+		background_arguments = _app_config_getstringexpand (L"ChromiumBackgroundResourceSavingCommandLine", CHROMIUM_BACKGROUND_RESOURCE_SAVING_COMMAND_LINE);
+		background_features = _app_config_getstring (L"ChromiumBackgroundResourceSavingFeatures", CHROMIUM_BACKGROUND_RESOURCE_SAVING_FEATURES);
 
 		_app_append_browser_arguments (&browser_arguments, background_arguments);
 		_app_append_browser_features (&browser_features, background_features);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableRendererSafety", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableRendererSafety", FALSE))
 	{
-		renderer_safety_arguments = _r_config_getstringexpand (L"ChromiumRendererSafetyCommandLine", CHROMIUM_RENDERER_SAFETY_COMMAND_LINE);
+		renderer_safety_arguments = _app_config_getstringexpand (L"ChromiumRendererSafetyCommandLine", CHROMIUM_RENDERER_SAFETY_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, renderer_safety_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableWindows11Features", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableWindows11Features", FALSE))
 	{
-		windows11_arguments = _r_config_getstringexpand (L"ChromiumWindows11CommandLine", CHROMIUM_WINDOWS11_COMMAND_LINE);
-		windows11_features = _r_config_getstring (L"ChromiumWindows11Features", CHROMIUM_WINDOWS11_FEATURES);
+		windows11_arguments = _app_config_getstringexpand (L"ChromiumWindows11CommandLine", CHROMIUM_WINDOWS11_COMMAND_LINE);
+		windows11_features = _app_config_getstring (L"ChromiumWindows11Features", CHROMIUM_WINDOWS11_FEATURES);
 
 		_app_append_browser_arguments (&browser_arguments, windows11_arguments);
 		_app_append_browser_features (&browser_features, windows11_features);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableDirectX", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableDirectX", FALSE))
 	{
-		directx_arguments = _r_config_getstringexpand (L"ChromiumDirectXCommandLine", CHROMIUM_DIRECTX_COMMAND_LINE);
+		directx_arguments = _app_config_getstringexpand (L"ChromiumDirectXCommandLine", CHROMIUM_DIRECTX_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, directx_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableVulkan", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableVulkan", FALSE))
 	{
-		vulkan_arguments = _r_config_getstringexpand (L"ChromiumVulkanCommandLine", CHROMIUM_VULKAN_COMMAND_LINE);
-		vulkan_features = _r_config_getstring (L"ChromiumVulkanFeatures", CHROMIUM_VULKAN_FEATURES);
+		vulkan_arguments = _app_config_getstringexpand (L"ChromiumVulkanCommandLine", CHROMIUM_VULKAN_COMMAND_LINE);
+		vulkan_features = _app_config_getstring (L"ChromiumVulkanFeatures", CHROMIUM_VULKAN_FEATURES);
 
 		_app_append_browser_arguments (&browser_arguments, vulkan_arguments);
 		_app_append_browser_features (&browser_features, vulkan_features);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableMultithreadedRaster", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableMultithreadedRaster", FALSE))
 	{
-		multithreading_arguments = _r_config_getstringexpand (L"ChromiumMultithreadingCommandLine", CHROMIUM_MULTITHREADING_COMMAND_LINE);
+		multithreading_arguments = _app_config_getstringexpand (L"ChromiumMultithreadingCommandLine", CHROMIUM_MULTITHREADING_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, multithreading_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumIgnoreGpuBlocklist", TRUE))
+	if (_app_config_getboolean (L"ChromiumIgnoreGpuBlocklist", TRUE))
 	{
-		ignore_gpu_blocklist_arguments = _r_config_getstringexpand (L"ChromiumIgnoreGpuBlocklistCommandLine", CHROMIUM_IGNORE_GPU_BLOCKLIST_COMMAND_LINE);
+		ignore_gpu_blocklist_arguments = _app_config_getstringexpand (L"ChromiumIgnoreGpuBlocklistCommandLine", CHROMIUM_IGNORE_GPU_BLOCKLIST_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, ignore_gpu_blocklist_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableHardwareAcceleration", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableHardwareAcceleration", FALSE))
 	{
-		gpu_arguments = _r_config_getstringexpand (L"ChromiumHardwareAccelerationCommandLine", CHROMIUM_HARDWARE_ACCELERATION_COMMAND_LINE);
+		gpu_arguments = _app_config_getstringexpand (L"ChromiumHardwareAccelerationCommandLine", CHROMIUM_HARDWARE_ACCELERATION_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, gpu_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableScrollableTabs", TRUE))
+	if (_app_config_getboolean (L"ChromiumEnableScrollableTabs", TRUE))
 	{
-		scrollable_tabs_features = _r_config_getstring (L"ChromiumScrollableTabsFeatures", CHROMIUM_SCROLLABLE_TABS_FEATURES);
+		scrollable_tabs_features = _app_config_getstring (L"ChromiumScrollableTabsFeatures", CHROMIUM_SCROLLABLE_TABS_FEATURES);
 
 		_app_append_browser_features (&browser_features, scrollable_tabs_features);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableCloseTabsRightExtension", TRUE))
+	if (_app_config_getboolean (L"ChromiumEnableCloseTabsRightExtension", TRUE))
 	{
 		close_tabs_right_arguments = _app_create_close_tabs_right_extension_arguments ();
 
 		_app_append_browser_arguments (&browser_arguments, close_tabs_right_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableAutofillPasswordFixes", TRUE))
+	if (_app_config_getboolean (L"ChromiumEnableAutofillPasswordFixes", TRUE))
 	{
-		autofill_password_arguments = _r_config_getstringexpand (L"ChromiumAutofillPasswordCommandLine", CHROMIUM_AUTOFILL_PASSWORD_COMMAND_LINE);
+		autofill_password_arguments = _app_config_getstringexpand (L"ChromiumAutofillPasswordCommandLine", CHROMIUM_AUTOFILL_PASSWORD_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, autofill_password_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableQuic", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableQuic", FALSE))
 	{
-		quic_arguments = _r_config_getstringexpand (L"ChromiumQuicCommandLine", CHROMIUM_QUIC_COMMAND_LINE);
+		quic_arguments = _app_config_getstringexpand (L"ChromiumQuicCommandLine", CHROMIUM_QUIC_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, quic_arguments);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableDnsOptions", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableDnsOptions", FALSE))
 	{
-		dns_arguments = _r_config_getstringexpand (L"ChromiumDnsCommandLine", CHROMIUM_DNS_COMMAND_LINE);
+		dns_arguments = _app_config_getstringexpand (L"ChromiumDnsCommandLine", CHROMIUM_DNS_COMMAND_LINE);
 
 		_app_append_browser_arguments (&browser_arguments, dns_arguments);
 	}
@@ -1212,20 +1213,20 @@ VOID _app_init_browser_info (
 
 	_app_append_browser_arguments (&browser_arguments, dns_blocklist_arguments);
 
-	if (_r_config_getboolean (L"ChromiumEnableGoogleWebStoreFix", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableGoogleWebStoreFix", FALSE))
 	{
-		google_webstore_arguments = _r_config_getstringexpand (L"ChromiumGoogleWebStoreCommandLine", CHROMIUM_GOOGLE_WEBSTORE_COMMAND_LINE);
-		google_webstore_disabled_features = _r_config_getstring (L"ChromiumGoogleWebStoreDisableFeatures", CHROMIUM_GOOGLE_WEBSTORE_DISABLE_FEATURES);
+		google_webstore_arguments = _app_config_getstringexpand (L"ChromiumGoogleWebStoreCommandLine", CHROMIUM_GOOGLE_WEBSTORE_COMMAND_LINE);
+		google_webstore_disabled_features = _app_config_getstring (L"ChromiumGoogleWebStoreDisableFeatures", CHROMIUM_GOOGLE_WEBSTORE_DISABLE_FEATURES);
 
 		_app_append_browser_arguments (&browser_arguments, google_webstore_arguments);
 		_app_append_browser_features (&browser_disabled_features, google_webstore_disabled_features);
 	}
 
-	if (_r_config_getboolean (L"ChromiumEnableCast", FALSE))
+	if (_app_config_getboolean (L"ChromiumEnableCast", FALSE))
 	{
-		cast_arguments = _r_config_getstringexpand (L"ChromiumCastCommandLine", CHROMIUM_CAST_COMMAND_LINE);
-		cast_disabled_features = _r_config_getstring (L"ChromiumCastDisableFeatures", CHROMIUM_CAST_DISABLE_FEATURES);
-		cast_features = _r_config_getstring (L"ChromiumCastFeatures", CHROMIUM_CAST_FEATURES);
+		cast_arguments = _app_config_getstringexpand (L"ChromiumCastCommandLine", CHROMIUM_CAST_COMMAND_LINE);
+		cast_disabled_features = _app_config_getstring (L"ChromiumCastDisableFeatures", CHROMIUM_CAST_DISABLE_FEATURES);
+		cast_features = _app_config_getstring (L"ChromiumCastFeatures", CHROMIUM_CAST_FEATURES);
 
 		_app_append_browser_arguments (&browser_arguments, cast_arguments);
 		_app_append_browser_features (&browser_disabled_features, cast_disabled_features);
@@ -1263,23 +1264,23 @@ VOID _app_init_browser_info (
 	// parse arguments
 	_app_parse_args (pbi);
 
-	pbi->check_period = _r_config_getlong (L"ChromiumCheckPeriod", 2);
+	pbi->check_period = _app_config_getlong (L"ChromiumCheckPeriod", 2);
 
 	if (pbi->check_period == INT_ERROR)
 		pbi->is_forcecheck = TRUE;
 
 	// set default config
 	if (!pbi->is_autodownload)
-		pbi->is_autodownload = _r_config_getboolean (L"ChromiumAutoDownload", FALSE);
+		pbi->is_autodownload = _app_config_getboolean (L"ChromiumAutoDownload", FALSE);
 
 	if (!pbi->is_bringtofront)
-		pbi->is_bringtofront = _r_config_getboolean (L"ChromiumBringToFront", TRUE);
+		pbi->is_bringtofront = _app_config_getboolean (L"ChromiumBringToFront", TRUE);
 
 	if (!pbi->is_waitdownloadend)
-		pbi->is_waitdownloadend = _r_config_getboolean (L"ChromiumWaitForDownloadEnd", TRUE);
+		pbi->is_waitdownloadend = _app_config_getboolean (L"ChromiumWaitForDownloadEnd", TRUE);
 
 	if (!pbi->is_onlyupdate)
-		pbi->is_onlyupdate = _r_config_getboolean (L"ChromiumUpdateOnly", FALSE);
+		pbi->is_onlyupdate = _app_config_getboolean (L"ChromiumUpdateOnly", FALSE);
 
 	// rewrite options when update-only mode is enabled
 	if (pbi->is_onlyupdate)
@@ -1753,7 +1754,7 @@ BOOLEAN _app_isupdaterequired (
 	if (pbi->check_period)
 	{
 		timestamp = _r_unixtime_now ();
-		timestamp -= _r_config_getlong64 (L"ChromiumLastCheck", 0);
+		timestamp -= _app_config_getlong64 (L"ChromiumLastCheck", 0);
 
 		if (timestamp >= _r_calc_days2seconds (pbi->check_period))
 			return TRUE;
@@ -1814,7 +1815,7 @@ BOOLEAN _app_checkupdate (
 
 	if (!is_exists || is_updaterequired)
 	{
-		update_url = _r_config_getstring (L"ChromiumUpdateUrl", CHROMIUM_UPDATE_URL);
+		update_url = _app_config_getstring (L"ChromiumUpdateUrl", CHROMIUM_UPDATE_URL);
 
 		if (!update_url)
 			return FALSE;
@@ -2840,7 +2841,7 @@ VOID _app_thread_check (
 
 		if (is_exists)
 		{
-			if (_r_config_getboolean (L"ChromiumRunAtEnd", TRUE))
+			if (_app_config_getboolean (L"ChromiumRunAtEnd", TRUE))
 			{
 				if (!pbi->is_waitdownloadend && !pbi->is_onlyupdate)
 					_app_openbrowser (hwnd, pbi);
@@ -2856,7 +2857,7 @@ VOID _app_thread_check (
 				if (pbi->is_bringtofront)
 					_r_wnd_toggle (hwnd, TRUE); // show window
 
-				if (_r_config_getboolean (L"ChromiumRunAtEnd", TRUE))
+				if (_app_config_getboolean (L"ChromiumRunAtEnd", TRUE))
 				{
 					if (is_exists && !pbi->is_onlyupdate && !pbi->is_waitdownloadend && !_app_isupdatedownloaded (pbi))
 						_app_openbrowser (hwnd, pbi);
@@ -2927,7 +2928,7 @@ VOID _app_thread_check (
 		is_stayopen = TRUE;
 	}
 
-	if (_r_config_getboolean (L"ChromiumRunAtEnd", TRUE) && !pbi->is_onlyupdate)
+	if (_app_config_getboolean (L"ChromiumRunAtEnd", TRUE) && !pbi->is_onlyupdate)
 		_app_openbrowser (hwnd, pbi);
 
 	_r_queuedlock_releaseshared (&lock_thread);
@@ -2994,7 +2995,7 @@ INT_PTR CALLBACK DlgProc (
 
 			if (hmenu)
 			{
-				_r_menu_checkitem (hmenu, IDM_RUNATEND_CHK, 0, MF_BYCOMMAND, _r_config_getboolean (L"ChromiumRunAtEnd", TRUE));
+				_r_menu_checkitem (hmenu, IDM_RUNATEND_CHK, 0, MF_BYCOMMAND, _app_config_getboolean (L"ChromiumRunAtEnd", TRUE));
 				_r_menu_checkitem (hmenu, IDM_DARKMODE_CHK, 0, MF_BYCOMMAND, _r_theme_isenabled ());
 			}
 
@@ -3119,7 +3120,7 @@ INT_PTR CALLBACK DlgProc (
 		{
 			_r_tray_destroy (hwnd, &GUID_TrayIcon);
 
-			if (_r_config_getboolean (L"ChromiumRunAtEnd", TRUE))
+			if (_app_config_getboolean (L"ChromiumRunAtEnd", TRUE))
 			{
 				if (browser_info.is_waitdownloadend && !browser_info.is_onlyupdate)
 					_app_openbrowser (NULL, &browser_info);
@@ -3349,7 +3350,7 @@ INT_PTR CALLBACK DlgProc (
 				{
 					BOOLEAN new_val;
 
-					new_val = !_r_config_getboolean (L"ChromiumRunAtEnd", TRUE);
+					new_val = !_app_config_getboolean (L"ChromiumRunAtEnd", TRUE);
 
 					_r_menu_checkitem (GetMenu (hwnd), ctrl_id, 0, MF_BYCOMMAND, new_val);
 

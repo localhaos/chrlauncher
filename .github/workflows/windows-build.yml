@@ -40,6 +40,19 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
 
+      - name: Validate project files
+        shell: pwsh
+        working-directory: x
+        run: |
+          if (-not (Test-Path -LiteralPath "chrlauncher.sln")) {
+            Get-ChildItem -Force | Format-Table Mode, Length, Name
+            throw "chrlauncher.sln missing from checkout path x"
+          }
+          if (-not (Test-Path -LiteralPath "chrlauncher.vcxproj")) {
+            Get-ChildItem -Force | Format-Table Mode, Length, Name
+            throw "chrlauncher.vcxproj missing from checkout path x"
+          }
+
       - name: Build
         working-directory: x
         run: >
