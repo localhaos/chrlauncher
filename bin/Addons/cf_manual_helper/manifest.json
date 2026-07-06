@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "chrlauncher CF Manual Helper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Detects security challenge pages and shows manual-session diagnostics without bypassing or solving challenges.",
   "permissions": [
     "storage"
@@ -15,6 +15,22 @@
       "matches": [
         "http://*/*",
         "https://*/*"
+      ],
+      "exclude_matches": [
+        "https://*.facebook.com/*",
+        "https://facebook.com/*",
+        "https://*.fbcdn.net/*",
+        "https://*.messenger.com/*",
+        "https://messenger.com/*",
+        "https://*.instagram.com/*",
+        "https://instagram.com/*",
+        "https://*.whatsapp.com/*",
+        "https://web.whatsapp.com/*",
+        "https://*.youtube.com/*",
+        "https://youtube.com/*",
+        "https://music.youtube.com/*",
+        "https://open.spotify.com/*",
+        "https://*.soundcloud.com/*"
       ],
       "js": [
         "content.js"
