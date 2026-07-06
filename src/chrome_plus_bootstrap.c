@@ -11,11 +11,12 @@
 #define CPB_DEFAULT_CHROMIUM_DIRECTORY L".\\bin"
 #define CPB_DEFAULT_CHROME_PLUS_DIRECTORY L".\\chrome_plus"
 #define CPB_LEGACY_CHROME_PLUS_DIRECTORY L"Addons\\chrome_plus"
-#define CPB_ADDONS_EXTENSION_DIRECTORY L"addons\\extensions\\close-tabs-right"
+#define CPB_CLOSE_TABS_EXTENSION_DIRECTORY L"addons\\extensions\\close-tabs-right"
+#define CPB_CF_MANUAL_HELPER_DIRECTORY L"addons\\cf_manual_helper"
 #define CPB_CHROME_PLUS_INI L"chrome++.ini"
 #define CPB_CHROME_PLUS_DATA_DIR L"%app%\\..\\Data"
 #define CPB_CHROME_PLUS_CACHE_DIR L"%app%\\..\\Cache"
-#define CPB_CHROME_PLUS_EXTENSION_COMMAND_LINE L"--load-extension=\"%app%\\..\\addons\\extensions\\close-tabs-right\""
+#define CPB_CHROME_PLUS_EXTENSION_COMMAND_LINE L"--load-extension=\"%app%\\..\\addons\\extensions\\close-tabs-right,%app%\\..\\addons\\cf_manual_helper\""
 
 static BOOL cpb_file_exists(
 	_In_ LPCWSTR path
@@ -142,16 +143,19 @@ static BOOL cpb_find_chrome_plus_dir(
 	return FALSE;
 }
 
-static BOOL cpb_extension_directory_exists(
+static BOOL cpb_any_managed_extension_exists(
 	_In_ LPCWSTR root
 )
 {
 	WCHAR extension_dir[MAX_PATH * 4];
 
-	if (!cpb_join_path(extension_dir, RTL_NUMBER_OF(extension_dir), root, CPB_ADDONS_EXTENSION_DIRECTORY))
-		return FALSE;
+	if (cpb_join_path(extension_dir, RTL_NUMBER_OF(extension_dir), root, CPB_CLOSE_TABS_EXTENSION_DIRECTORY) && cpb_directory_exists(extension_dir))
+		return TRUE;
 
-	return cpb_directory_exists(extension_dir);
+	if (cpb_join_path(extension_dir, RTL_NUMBER_OF(extension_dir), root, CPB_CF_MANUAL_HELPER_DIRECTORY) && cpb_directory_exists(extension_dir))
+		return TRUE;
+
+	return FALSE;
 }
 
 static VOID cpb_normalize_chrome_plus_ini(
@@ -181,7 +185,7 @@ static VOID cpb_sync_chrome_plus(void)
 	WCHAR configured_bin[MAX_PATH * 4];
 	WCHAR binary_dir[MAX_PATH * 4];
 	WCHAR chrome_plus_dir[MAX_PATH * 4];
-	BOOL has_extension_dir;
+	BOOL has_managed_extension_dir;
 	DWORD length;
 
 	length = GetModuleFileNameW(NULL, root, RTL_NUMBER_OF(root));
@@ -221,12 +225,12 @@ static VOID cpb_sync_chrome_plus(void)
 	if (!cpb_find_chrome_plus_dir(root, config_path, chrome_plus_dir, RTL_NUMBER_OF(chrome_plus_dir)))
 		return;
 
-	has_extension_dir = cpb_extension_directory_exists(root);
+	has_managed_extension_dir = cpb_any_managed_extension_exists(root);
 
-	cpb_normalize_chrome_plus_ini(chrome_plus_dir, has_extension_dir);
+	cpb_normalize_chrome_plus_ini(chrome_plus_dir, has_managed_extension_dir);
 	cpb_copy_if_source_exists(chrome_plus_dir, binary_dir, L"version.dll");
 	cpb_copy_if_source_exists(chrome_plus_dir, binary_dir, CPB_CHROME_PLUS_INI);
-	cpb_normalize_chrome_plus_ini(binary_dir, has_extension_dir);
+	cpb_normalize_chrome_plus_ini(binary_dir, has_managed_extension_dir);
 }
 
 static VOID __cdecl cpb_crt_startup(void)
