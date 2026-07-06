@@ -17,10 +17,8 @@ function Invoke-GitPatchSet {
     param(
         [Parameter(Mandatory = $true)]
         [string]$TargetDirectory,
-
         [Parameter(Mandatory = $true)]
         [string]$PatchRoot,
-
         [Parameter(Mandatory = $true)]
         [string]$Label
     )
@@ -36,14 +34,12 @@ function Invoke-GitPatchSet {
     }
 
     $patches = Get-ChildItem -LiteralPath $PatchRoot -Filter '*.patch' -File | Sort-Object Name
-
     if (-not $patches) {
         Write-Host "[PATCH] No $Label *.patch files in: $PatchRoot"
         return
     }
 
     Push-Location -LiteralPath $TargetDirectory
-
     try {
         foreach ($patch in $patches) {
             $patchPath = $patch.FullName
@@ -73,6 +69,24 @@ function Invoke-GitPatchSet {
     }
 }
 
+function Disable-DefaultMinimizedStartup {
+    $projectPath = Join-Path $repoRoot 'chrlauncher.vcxproj'
+    if (-not (Test-Path -LiteralPath $projectPath)) {
+        Write-Host "[PATCH] Project file not found, skipping startup visibility normalization: $projectPath"
+        return
+    }
+
+    $old = Get-Content -LiteralPath $projectPath -Raw
+    $new = $old -replace 'APP_STARTMINIMIZED;', ''
+
+    if ($old -ne $new) {
+        Set-Content -LiteralPath $projectPath -Value $new -NoNewline -Encoding UTF8
+        Write-Host "[PATCH] Disabled default minimized startup in chrlauncher.vcxproj"
+    } else {
+        Write-Host "[PATCH] Default minimized startup already disabled in chrlauncher.vcxproj"
+    }
+}
+
 Invoke-GitPatchSet `
     -TargetDirectory $repoRoot `
     -PatchRoot $PatchDirectory `
@@ -82,3 +96,5 @@ Invoke-GitPatchSet `
     -TargetDirectory $RoutineDirectory `
     -PatchRoot (Join-Path $PatchDirectory 'routine') `
     -Label 'routine'
+
+Disable-DefaultMinimizedStartup
