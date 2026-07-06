@@ -139,8 +139,8 @@ if (-not $text.Contains($needle)) {
     throw 'Cannot locate _app_is_absolute_path block for portable root patch.'
 }
 
-$text = $text.Replace($needle, $insert)
 $text = $text.Replace('app_directory = _r_app_getdirectory ();', 'app_directory = _app_get_portable_root_directory ();')
+$text = $text.Replace($needle, $insert)
 
 Set-Content -LiteralPath $main -Value $text -NoNewline -Encoding UTF8
 Write-Host '[PREP] Portable root source patch applied.'
