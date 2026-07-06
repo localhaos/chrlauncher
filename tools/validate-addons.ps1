@@ -1,0 +1,141 @@
+[CmdletBinding()]
+param()
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version 2.0
+
+$Root = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')
+$Addons = Join-Path $Root 'bin\Addons'
+$Errors = New-Object System.Collections.Generic.List[string]
+
+function Add-Err([string]$Message) {
+    $Errors.Add($Message) | Out-Null
+}
+
+function Assert-File([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        Add-Err "Missing file: $Path"
+    }
+}
+
+function Assert-Dir([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
+        Add-Err "Missing directory: $Path"
+    }
+}
+
+function Read-Json([string]$Path) {
+    Assert-File $Path
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    try {
+        return Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        Add-Err "Invalid JSON: $Path :: $($_.Exception.Message)"
+        return $null
+    }
+}
+
+function Read-IniValue([string]$Path, [string]$Section, [string]$Key) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    $active = $false
+    foreach ($line in Get-Content -LiteralPath $Path -Encoding UTF8) {
+        $trim = $line.Trim()
+        if (-not $trim -or $trim.StartsWith('#') -or $trim.StartsWith(';')) { continue }
+        if ($trim -match '^\[(.+)\]$') {
+            $active = ($matches[1] -ieq $Section)
+            continue
+        }
+        if ($active -and $trim -match '^([^=]+)=(.*)$' -and $matches[1].Trim() -ieq $Key) {
+            return $matches[2]
+        }
+    }
+    return $null
+}
+
+Assert-Dir $Addons
+
+$tabTools = Join-Path $Addons 'extensions\close-tabs-right'
+Assert-Dir $tabTools
+$tabManifest = Read-Json (Join-Path $tabTools 'manifest.json')
+if ($tabManifest) {
+    if ($tabManifest.name -ne 'chrlauncher Tab Tools') { Add-Err 'Tab Tools manifest name mismatch.' }
+    foreach ($file in @(
+        'service_worker.js',
+        'site_test_content.js',
+        'chatgpt_download_content.js',
+        'chatgpt_download_page_hook.js',
+        'devtools.html',
+        'devtools.js',
+        'devtools_panel.html',
+        'devtools_panel.css',
+        'devtools_panel.js'
+    )) {
+        Assert-File (Join-Path $tabTools $file)
+    }
+    foreach ($stale in @('cf_manual_helper.js', 'slurg.html', 'slurg.css', 'slurg.js', 'slurg_data.js')) {
+        if (Test-Path -LiteralPath (Join-Path $tabTools $stale)) { Add-Err "Stale file still in Tab Tools: $stale" }
+    }
+    $manifestText = Get-Content -LiteralPath (Join-Path $tabTools 'manifest.json') -Raw -Encoding UTF8
+    if ($manifestText -match 'http://\*/\*|https://\*/\*') { Add-Err 'Tab Tools should not request broad all-host permissions.' }
+}
+
+$cf = Join-Path $Addons 'cf_manual_helper'
+Assert-Dir $cf
+$cfManifest = Read-Json (Join-Path $cf 'manifest.json')
+if ($cfManifest) {
+    if ($cfManifest.name -ne 'chrlauncher CF Manual Helper') { Add-Err 'CF helper manifest name mismatch.' }
+    foreach ($file in @('content.js', 'popup.html', 'popup.css', 'popup.js', 'README.md')) {
+        Assert-File (Join-Path $cf $file)
+    }
+    $cfText = Get-Content -LiteralPath (Join-Path $cf 'content.js') -Raw -Encoding UTF8
+    foreach ($forbidden in @('cf_clearance=', 'document.cookie =', 'chrome.cookies.set', 'turnstile.click', '.click()')) {
+        if ($cfText.Contains($forbidden)) { Add-Err "CF helper contains forbidden token/action: $forbidden" }
+    }
+}
+
+$slurg = Join-Path $Addons 'slurg'
+Assert-Dir $slurg
+foreach ($file in @('index.html', 'slurg.css', 'slurg.js', 'slurg_data.js', 'README.md', 'open-slurg.bat')) {
+    Assert-File (Join-Path $slurg $file)
+}
+$slurgJs = Join-Path $slurg 'slurg.js'
+if (Test-Path -LiteralPath $slurgJs) {
+    $text = Get-Content -LiteralPath $slurgJs -Raw -Encoding UTF8
+    if ($text -match 'chrome\.runtime|chrome\.tabs') { Add-Err 'Standalone Slurg must not depend on extension APIs.' }
+}
+
+$optimizer = Join-Path $Addons 'optimizer_guard'
+Assert-Dir $optimizer
+foreach ($file in @('optimizer_guard.ini', 'apply-optimizer-guard.ps1', 'apply-optimizer-guard.bat', 'README.md')) {
+    Assert-File (Join-Path $optimizer $file)
+}
+$guardIni = Join-Path $optimizer 'optimizer_guard.ini'
+$guardCommand = Read-IniValue $guardIni 'chrome_plus' 'command_line'
+if (-not $guardCommand) { Add-Err 'optimizer_guard.ini missing [chrome_plus] command_line.' }
+else {
+    foreach ($required in @('addons\extensions\close-tabs-right', 'addons\cf_manual_helper', '--disk-cache-dir', '--disable-background-networking', '--disable-domain-reliability')) {
+        if ($guardCommand -notlike "*$required*") { Add-Err "optimizer_guard command_line missing: $required" }
+    }
+}
+
+$nativeReadme = Join-Path $Addons 'src\README.md'
+Assert-File $nativeReadme
+$nativeSources = @(
+    'bin\Addons\src\optimizer_guard\optimizer_guard_bootstrap.c',
+    'bin\Addons\src\cf_manual_helper\cf_manual_helper_bootstrap.c'
+)
+$props = Join-Path $Root 'Directory.Build.props'
+Assert-File $props
+$propsText = if (Test-Path -LiteralPath $props) { Get-Content -LiteralPath $props -Raw -Encoding UTF8 } else { '' }
+foreach ($source in $nativeSources) {
+    Assert-File (Join-Path $Root $source)
+    if ($propsText -notlike "*$source*") { Add-Err "Native addon source not compiled in Directory.Build.props: $source" }
+}
+
+if ($Errors.Count) {
+    Write-Host '[ADDONS] Validation failed:'
+    foreach ($err in $Errors) { Write-Host " - $err" }
+    throw "Addon validation failed with $($Errors.Count) error(s)."
+}
+
+Write-Host '[ADDONS] Validation OK.'
