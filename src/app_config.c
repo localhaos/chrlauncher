@@ -7,152 +7,6 @@
 #include "xallocator/xallocator.c"
 #include "cfgread.c"
 
-typedef enum _APP_CONFIG_FILE_KIND
-{
-	AppConfigFileBase = 0,
-	AppConfigFileParameters,
-	AppConfigFileVersion,
-} APP_CONFIG_FILE_KIND;
-
-static LPCWSTR const AppParameterKeys[] = {
-	L"ChromiumCommandLine",
-	L"ChromiumSpoofRegion",
-	L"ChromiumSpoofUseWindowsLocale",
-	L"ChromiumSpoofRegionLocale",
-	L"ChromiumSpoofRegionAcceptLanguage",
-	L"ChromiumSpoofGeolocation",
-	L"ChromiumSpoofGeolocationCommandLine",
-	L"ChromiumSpoofTimeZone",
-	L"ChromiumSpoofTimeZoneId",
-	L"ChromiumSpoofTimeZoneCommandLine",
-	L"ChromiumSpoofHardwareId",
-	L"ChromiumSpoofHardwareIdCommandLine",
-	L"ChromiumEnableLosslessOptimization",
-	L"ChromiumLosslessOptimizationCommandLine",
-	L"ChromiumLosslessOptimizationFeatures",
-	L"ChromiumEnableTextPerformanceFixes",
-	L"ChromiumTextPerformanceCommandLine",
-	L"ChromiumTextPerformanceDisableFeatures",
-	L"ChromiumEnableAggressiveTextPerformanceFixes",
-	L"ChromiumAggressiveTextPerformanceCommandLine",
-	L"ChromiumEnableBackgroundResourceSaving",
-	L"ChromiumBackgroundResourceSavingCommandLine",
-	L"ChromiumBackgroundResourceSavingFeatures",
-	L"ChromiumEnableRendererSafety",
-	L"ChromiumRendererSafetyCommandLine",
-	L"ChromiumEnableWindows11Features",
-	L"ChromiumWindows11CommandLine",
-	L"ChromiumWindows11Features",
-	L"ChromiumEnableDirectX",
-	L"ChromiumDirectXCommandLine",
-	L"ChromiumEnableVulkan",
-	L"ChromiumVulkanCommandLine",
-	L"ChromiumVulkanFeatures",
-	L"ChromiumEnableMultithreadedRaster",
-	L"ChromiumMultithreadingCommandLine",
-	L"ChromiumIgnoreGpuBlocklist",
-	L"ChromiumIgnoreGpuBlocklistCommandLine",
-	L"ChromiumEnableHardwareAcceleration",
-	L"ChromiumHardwareAccelerationCommandLine",
-	L"ChromiumEnableScrollableTabs",
-	L"ChromiumScrollableTabsFeatures",
-	L"ChromiumEnableCloseTabsRightExtension",
-	L"ChromiumCloseTabsRightExtensionDirectory",
-	L"ChromiumEnableAutofillPasswordFixes",
-	L"ChromiumAutofillPasswordCommandLine",
-	L"ChromiumEnableQuic",
-	L"ChromiumQuicCommandLine",
-	L"ChromiumEnableDnsOptions",
-	L"ChromiumDnsCommandLine",
-	L"ChromiumEnableSecureDns",
-	L"ChromiumSecureDnsUrl",
-	L"ChromiumEnableDnsBlocklistUrl",
-	L"ChromiumDnsBlocklistUrl",
-	L"ChromiumDnsBlocklistCache",
-	L"ChromiumDnsBlocklistCacheDirectory",
-	L"ChromiumDnsBlocklistCacheMaxAgeHours",
-	L"ChromiumDnsBlocklistSink",
-	L"ChromiumDnsBlocklistIncludeSubdomains",
-	L"ChromiumDnsBlocklistMaxRules",
-	L"ChromiumDnsBlocklistMaxCommandLineChars",
-	L"ChromiumEnableGoogleWebStoreFix",
-	L"ChromiumGoogleWebStoreCommandLine",
-	L"ChromiumGoogleWebStoreDisableFeatures",
-	L"ChromiumEnableCast",
-	L"ChromiumCastCommandLine",
-	L"ChromiumCastFeatures",
-	L"ChromiumCastDisableFeatures",
-};
-
-static LPCWSTR const AppVersionKeys[] = {
-	L"ChromiumUpdateUrl",
-	L"ChromiumArchitecture",
-	L"ChromiumAutoDownload",
-	L"ChromiumBringToFront",
-	L"ChromiumWaitForDownloadEnd",
-	L"ChromiumUpdateOnly",
-	L"ChromiumType",
-	L"ChromiumCheckPeriod",
-};
-
-static BOOLEAN _app_config_key_in_list (
-	_In_ LPCWSTR key_name,
-	_In_reads_ (count) LPCWSTR const *keys,
-	_In_ ULONG_PTR count
-)
-{
-	if (!key_name || !key_name[0])
-		return FALSE;
-
-	for (ULONG_PTR i = 0; i < count; i++)
-	{
-		if (lstrcmpiW (key_name, keys[i]) == 0)
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
-static APP_CONFIG_FILE_KIND _app_config_get_file_kind_for_key (
-	_In_ LPCWSTR key_name
-)
-{
-	if (_app_config_key_in_list (key_name, AppVersionKeys, RTL_NUMBER_OF (AppVersionKeys)))
-		return AppConfigFileVersion;
-
-	if (_app_config_key_in_list (key_name, AppParameterKeys, RTL_NUMBER_OF (AppParameterKeys)))
-		return AppConfigFileParameters;
-
-	return AppConfigFileBase;
-}
-
-PR_STRING _app_get_parameters_path ()
-{
-	return _app_create_app_relative_path (APP_ADDONS_DIRECTORY L"\\" APP_ADDONS_PARAMETERS_FILE);
-}
-
-PR_STRING _app_get_version_path ()
-{
-	return _app_create_app_relative_path (APP_ADDONS_DIRECTORY L"\\" APP_ADDONS_VERSION_FILE);
-}
-
-static PR_STRING _app_config_create_path_for_kind (
-	_In_ APP_CONFIG_FILE_KIND kind
-)
-{
-	switch (kind)
-	{
-		case AppConfigFileParameters:
-			return _app_get_parameters_path ();
-
-		case AppConfigFileVersion:
-			return _app_get_version_path ();
-
-		default:
-			return _app_get_config_path ();
-	}
-}
-
 static PR_STRING _app_config_read_file_string_section (
 	_In_ PR_STRING path,
 	_In_opt_ LPCWSTR section_name,
@@ -210,35 +64,25 @@ static PR_STRING _app_config_read_file_string (
 			return value;
 	}
 
+	// Unified portable configuration format:
+	// all keys are read from Addons\Config.ini, including former Parameters.ini
+	// and Version.ini keys. Flat files without sections are supported.
 	return _app_config_read_file_string_section (path, NULL, key_name);
 }
 
-static PR_STRING _app_config_read_split_string (
+static PR_STRING _app_config_read_unified_string (
 	_In_ LPCWSTR key_name
 )
 {
-	APP_CONFIG_FILE_KIND kind;
 	PR_STRING path;
 	PR_STRING value = NULL;
 
-	kind = _app_config_get_file_kind_for_key (key_name);
-	path = _app_config_create_path_for_kind (kind);
+	path = _app_get_config_path ();
 
 	if (path)
 	{
 		value = _app_config_read_file_string (path, key_name);
 		_r_obj_dereference (path);
-	}
-
-	if (!value && kind != AppConfigFileBase)
-	{
-		path = _app_get_config_path ();
-
-		if (path)
-		{
-			value = _app_config_read_file_string (path, key_name);
-			_r_obj_dereference (path);
-		}
 	}
 
 	return value;
@@ -251,7 +95,7 @@ PR_STRING _app_config_getstring (
 {
 	PR_STRING value;
 
-	value = _app_config_read_split_string (key_name);
+	value = _app_config_read_unified_string (key_name);
 
 	if (value)
 		return value;
