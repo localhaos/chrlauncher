@@ -1,0 +1,22 @@
+diff --git a/src/rapp.c b/src/rapp.c
+index 6c750c1..2c36c70 100644
+--- a/src/rapp.c
++++ b/src/rapp.c
+@@ -182,14 +182,17 @@ BOOLEAN _r_app_initialize (
+ #endif // APP_NO_GUEST
+ #endif // !APP_CONSOLE
+ 
+-	// check for wow64 working and show warning if it is TRUE!
++	// check for wow64 working and show warning if it is TRUE.
++	// chrlauncher portable builds intentionally allow the x86 launcher to run
++	// on x64 Windows when APP_ALLOW_WOW64 is defined by the project file.
+ #if !defined(_DEBUG) && !defined(_WIN64)
+-	if (_r_sys_iswow64 () && !_r_sys_getopt (_r_sys_getcommandline (), L"nowow64", NULL))
++	if (!defined(APP_ALLOW_WOW64) && _r_sys_iswow64 () && !_r_sys_getopt (_r_sys_getcommandline (), L"nowow64", NULL))
+ 	{
+ 		_r_report_error (APP_WARNING_WOW64_TITLE, APP_WARNING_WOW64_TEXT, STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE, ET_NATIVE);
+ 
+ 		return FALSE;
+ 	}
+ #endif // !_DEBUG && !_WIN64
+ 
